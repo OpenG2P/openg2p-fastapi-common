@@ -164,10 +164,17 @@ class JwtBearerAuth(HTTPBearer):
 
     @classmethod
     def combine_tokens(cls, *tokens) -> dict:
-        return cls.combine_token_dicts(
-            *[
-                jwt.get_unverified_claims(token) if isinstance(token, str) else token
-                for token in tokens
-                if token
-            ]
-        )
+        res = []
+        for token in tokens:
+            if token:
+                try:
+                    res.append(
+                        jwt.get_unverified_claims(token)
+                        if isinstance(token, str)
+                        else token
+                    )
+                except Exception:
+                    # This means one of the token being combined is not JWT or dict.
+                    # Ignore such tokens
+                    pass
+        return cls.combine_token_dicts(*res)

@@ -5,7 +5,7 @@ from typing import Annotated, List, Union
 
 import httpx
 import orjson
-from fastapi import Depends, Response
+from fastapi import Depends, HTTPException, Response, status
 from fastapi.responses import RedirectResponse
 from jose import jwt
 from openg2p_fastapi_common.controller import BaseController
@@ -112,9 +112,20 @@ class AuthController(BaseController):
         login_provider = None
         try:
             login_provider = await self.get_login_provider_db_by_id(id)
-        except Exception:
+        except Exception as e:
             _logger.exception("Login Provider fetching: Invalid Id")
-            return None
+            # Instead of returning None, re-raise the exception to be handled by FastAPI
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Login Provider ID Not Found",
+            ) from e
+
+        if not login_provider:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Login Provider ID Not Found",
+            )
+
         if login_provider.type == LoginProviderTypes.oauth2_auth_code:
             auth_parameters = OauthProviderParameters.model_validate(
                 login_provider.authorization_parameters
@@ -125,9 +136,6 @@ class AuthController(BaseController):
                 "redirect_uri": auth_parameters.redirect_uri,
                 "scope": auth_parameters.scope,
                 "nonce": secrets.token_urlsafe(),
-                "code_verifier": auth_parameters.code_verifier,
-                "code_challenge": auth_parameters.code_challenge,
-                "code_challenge_method": auth_parameters.code_challenge_method,
                 "state": orjson.dumps(
                     {
                         "p": login_provider.id,
@@ -135,6 +143,13 @@ class AuthController(BaseController):
                     }
                 ).decode(),
             }
+            if auth_parameters.enable_pkce:
+                authorize_query_params.update(
+                    {
+                        "code_challenge": auth_parameters.code_challenge,
+                        "code_challenge_method": auth_parameters.code_challenge_method,
+                    }
+                )
 
             authorize_query_params.update(auth_parameters.extra_authorize_parameters)
             return RedirectResponse(
@@ -161,13 +176,13 @@ class AuthController(BaseController):
         combine=True,
     ) -> dict:
         access_token = auth.credentials if isinstance(auth, AuthCredentials) else auth
-        if not iss:
-            iss = (
-                jwt.get_unverified_claims(access_token)["iss"]
-                if isinstance(auth, str)
-                else auth.iss
-            )
         if not provider:
+            if not iss:
+                iss = (
+                    jwt.get_unverified_claims(access_token)["iss"]
+                    if isinstance(auth, str)
+                    else auth.iss
+                )
             provider = await self.get_login_provider_db_by_iss(iss)
         # TODO: Check if provider is None
         auth_params = OauthProviderParameters.model_validate(

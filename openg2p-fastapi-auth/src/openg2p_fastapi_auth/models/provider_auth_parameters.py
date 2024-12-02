@@ -28,6 +28,7 @@ class OauthProviderParameters(BaseModel):
     response_type: str = "code"
     redirect_uri: str
     scope: str = "openid profile email"
+    enable_pkce: Optional[bool] = True
     code_verifier: str
     code_challenge: Optional[str] = None
     code_challenge_method: str = "S256"

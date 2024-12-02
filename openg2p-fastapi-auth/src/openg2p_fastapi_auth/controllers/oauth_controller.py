@@ -65,10 +65,11 @@ class OAuthController(BaseController):
             token_request_data = {
                 "client_id": auth_parameters.client_id,
                 "grant_type": "authorization_code",
-                "code_verifier": auth_parameters.code_verifier,
                 "redirect_uri": auth_parameters.redirect_uri,
                 "code": query_params.get("code"),
             }
+            if auth_parameters.enable_pkce:
+                token_request_data["code_verifier"] = auth_parameters.code_verifier
 
             token_auth = None
             if (
@@ -114,21 +115,23 @@ class OAuthController(BaseController):
                     message="Unauthorized. Failed to get token from Oauth Server"
                 ) from e
 
+            config_dict = _config.model_dump()
             access_token: str = res["access_token"]
             id_token: str = res["id_token"]
+            expires_in = None
+            if config_dict.get("auth_cookie_set_expires", False):
+                expires_in = res.get("expires_in", None)
+                if expires_in:
+                    expires_in = datetime.now(tz=timezone.utc) + timedelta(
+                        seconds=expires_in
+                    )
 
-            config_dict = _config.model_dump()
-            access_token_payload = jwt.get_unverified_claims(access_token)
             response = RedirectResponse(state.get("r", "/"))
             response.set_cookie(
                 "X-Access-Token",
                 access_token,
                 max_age=config_dict.get("auth_cookie_max_age", None),
-                expires=datetime.fromtimestamp(
-                    access_token_payload.get("exp", None), tz=timezone.utc
-                )
-                if config_dict.get("auth_cookie_set_expires", False)
-                else None,
+                expires=expires_in,
                 path=config_dict.get("auth_cookie_path", "/"),
                 httponly=config_dict.get("auth_cookie_httponly", True),
                 secure=config_dict.get("auth_cookie_secure", True),
@@ -137,11 +140,7 @@ class OAuthController(BaseController):
                 "X-ID-Token",
                 id_token,
                 max_age=config_dict.get("auth_cookie_max_age", None),
-                expires=datetime.fromtimestamp(
-                    access_token_payload.get("exp", None), tz=timezone.utc
-                )
-                if config_dict.get("auth_cookie_set_expires", False)
-                else None,
+                expires=expires_in,
                 path=config_dict.get("auth_cookie_path", "/"),
                 httponly=config_dict.get("auth_cookie_httponly", True),
                 secure=config_dict.get("auth_cookie_secure", True),
