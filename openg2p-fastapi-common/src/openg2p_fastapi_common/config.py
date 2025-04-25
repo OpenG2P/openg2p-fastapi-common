@@ -33,7 +33,7 @@ class Settings(BaseSettings):
 
     logging_default_logger_name: str = "app"
     logging_level: str = "INFO"
-    logging_file_name: Path = None
+    logging_file_name: Path | None = None
 
     openapi_title: str = "Common"
     openapi_description: str = """
