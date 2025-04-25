@@ -1,6 +1,6 @@
 from typing import List, Optional
 
-from openg2p_fastapi_common.config import Settings
+from openg2p_fastapi_common.config import Settings as BaseSettings
 from pydantic import BaseModel
 from pydantic_settings import SettingsConfigDict
 
@@ -14,7 +14,7 @@ class ApiAuthSettings(BaseModel):
     id_token_verify_at_hash: Optional[bool] = None
 
 
-class Settings(Settings):
+class Settings(BaseSettings):
     model_config = SettingsConfigDict(
         env_prefix="common_", env_file=".env", extra="allow"
     )
