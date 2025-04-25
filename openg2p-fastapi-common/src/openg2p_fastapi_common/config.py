@@ -2,7 +2,6 @@
 import os
 from enum import Enum
 from pathlib import Path
-from typing import Optional
 
 from pydantic import model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -34,7 +33,7 @@ class Settings(BaseSettings):
 
     logging_default_logger_name: str = "app"
     logging_level: str = "INFO"
-    logging_file_name: Optional[Path] = None
+    logging_file_name: Path = None
 
     openapi_title: str = "Common"
     openapi_description: str = """
@@ -54,14 +53,16 @@ class Settings(BaseSettings):
 
     # If empty will be constructed like this
     # f"{db_driver}://{db_username}:{db_password}@{db_hostname}:{db_port}/{db_dbname}"
-    db_datasource: Optional[str] = None
-    db_driver: Optional[str] = "postgresql+asyncpg"
-    db_username: Optional[str] = None
-    db_password: Optional[str] = None
-    db_hostname: Optional[str] = "localhost"
-    db_port: Optional[int] = 5432
-    db_dbname: Optional[str] = None
-    db_logging: Optional[bool] = False
+    db_datasource: str = None
+    db_driver: str = "postgresql+asyncpg"
+    db_username: str = None
+    db_password: str = None
+    db_hostname: str = "localhost"
+    db_port: int = 5432
+    db_dbname: str = None
+    db_logging: bool = False
+
+    error_response_debug: bool = False
 
     @model_validator(mode="after")
     def validate_db_datasource(self) -> "Settings":

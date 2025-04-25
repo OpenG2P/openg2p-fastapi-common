@@ -90,9 +90,12 @@ class BaseExceptionHandler(BaseComponent):
         if len(exc_split) > 1:
             code = exc_split[0]
             message = exc_split[1]
-        else:
+        elif _config.error_response_debug:
             code = "G2P-REQ-100"
             message = exc_split[0]
+        else:
+            code = "G2P-REQ-100"
+            message = "Unknown Error."
         res = ErrorListResponse(errors=[ErrorResponse(code=code, message=message)])
         return ORJSONResponse(content=res.model_dump(), status_code=500)
 
