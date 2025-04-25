@@ -33,7 +33,7 @@ class Settings(BaseSettings):
 
     logging_default_logger_name: str = "app"
     logging_level: str = "INFO"
-    logging_file_name: Path = None
+    logging_file_name: Path | None = None
 
     openapi_title: str = "Common"
     openapi_description: str = """
@@ -53,13 +53,13 @@ class Settings(BaseSettings):
 
     # If empty will be constructed like this
     # f"{db_driver}://{db_username}:{db_password}@{db_hostname}:{db_port}/{db_dbname}"
-    db_datasource: str = None
+    db_datasource: str = ""
     db_driver: str = "postgresql+asyncpg"
-    db_username: str = None
-    db_password: str = None
+    db_username: str = ""
+    db_password: str = ""
     db_hostname: str = "localhost"
     db_port: int = 5432
-    db_dbname: str = None
+    db_dbname: str = ""
     db_logging: bool = False
 
     error_response_debug: bool = False
