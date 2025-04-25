@@ -58,9 +58,9 @@ class JwtBearerAuth(HTTPBearer):
             raise UnauthorizedError(
                 message=f"Unauthorized. Jwt expired. {repr(e)}"
             ) from e
-        iss = unverified_payload["iss"]
+        iss = unverified_payload.get("iss", None)
         aud = unverified_payload.get("aud", None)
-        if iss not in issuers_list:
+        if (not iss) or (iss not in issuers_list):
             raise UnauthorizedError(message="Unauthorized. Unknown Issuer.")
 
         if audiences_list:
