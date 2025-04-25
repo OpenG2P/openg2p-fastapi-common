@@ -32,7 +32,7 @@ class BaseORMModelWithId(BaseORMModel):
         async_session_maker = async_sessionmaker(dbengine.get())
         async with async_session_maker() as session:
             result = await session.get(cls, id)
-            if result.active != active:
+            if (not result) or (result.active != active):
                 result = None
 
         return result

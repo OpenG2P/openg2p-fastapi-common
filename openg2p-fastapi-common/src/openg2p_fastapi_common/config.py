@@ -63,6 +63,8 @@ class Settings(BaseSettings):
     db_dbname: Optional[str] = None
     db_logging: Optional[bool] = False
 
+    error_response_debug: bool = False
+
     @model_validator(mode="after")
     def validate_db_datasource(self) -> "Settings":
         if self.db_datasource:
