@@ -3,7 +3,7 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
-name = "openg2p_fastapi_common"
+name = "openg2p-fastapi-common"
 authors = [
   { name="OpenG2P", email="info@openg2p.org" },
 ]
