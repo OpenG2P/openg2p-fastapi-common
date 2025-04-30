@@ -13,9 +13,59 @@ on:
         default: latest
 jobs:
   tag-repo:
-    uses: openg2p/openg2p-packaging/.github/workflows/tag.yml@main
-    with:
-      new-tag: ${{ inputs.new-tag }}
-      previous-tag: ${{ inputs.previous-tag }}
-    secrets:
-      OPENG2P_BOT_GITHUB_PAT: ${{ secrets.OPENG2P_BOT_GITHUB_PAT }}
+    name: Tag Repo
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          fetch-tags: true
+      - name: Check tag convention
+        run: |
+          pattern="^v[0-9]+.[0-9]+.[0-9]+$"
+          if ! [[ ${{ inputs.new-tag }} =~ $pattern ]]; then
+            echo "Tag convention not followed"
+            exit 1
+          fi
+      - name: Check if the branch has moved at all
+        run: |
+          check_branch_and_exit (){
+            if [[ -z $(git diff $1) ]]; then
+              echo "::error::No changes on this branch. Tag not created"
+              exit 1
+            fi
+          }
+          if [[ "${{ inputs.previous-tag }}" == "latest" ]]; then
+            latest_tag=$(git describe --tags)
+            check_branch_and_exit "$latest_tag"
+          elif [[ "${{ inputs.previous-tag }}" != "None" ]]; then
+            check_branch_and_exit "${{ inputs.previous-tag }}"
+          fi
+
+      - name: Changing version
+        run: |
+          NEW_VERSION="${{ inputs.new-tag }}"
+          NEW_VERSION=${NEW_VERSION#v}
+          for init_file in $(grep -rl "__version__ ="); do
+            if [[ $init_file == *.py ]]; then
+              version_line=$(grep "__version__" $init_file)
+              sed -i "s/$version_line/__version__ = \"${NEW_VERSION}\"/g" $init_file
+            fi
+          done
+
+      - name: Removing github development package dependencies
+        run: |
+          for cleanup_file in $(grep -rl "to_be_removed_on_tag" Dockerfile.*); do
+            sed -i "/to_be_removed_on_tag/d" $cleanup_file
+          done
+
+      - name: Commit Changes
+        uses: EndBug/add-and-commit@v7
+        with:
+          default_author: github_actions
+          message: "Preparing new tag ${{ github.event.inputs.git-ref }}"
+          add: "**/*.py Dockerfile.* api-docs"
+          push: false
+          tag: ${{ inputs.new-tag }}

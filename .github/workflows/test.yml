@@ -20,19 +20,8 @@ jobs:
           - "3.10"
         os:
           - ubuntu-latest
-    services:
-      postgres:
-        image: postgres:9.6
-        env:
-          POSTGRES_USER: openg2p
-          POSTGRES_PASSWORD: openg2p
-          POSTGRES_DB: openg2p
-        ports:
-          - 5432:5432
     steps:
       - uses: actions/checkout@v3
-        with:
-          fetch-depth: 0
       - name: Setup python for test ${{ matrix.py }}
         uses: actions/setup-python@v4
         with:
