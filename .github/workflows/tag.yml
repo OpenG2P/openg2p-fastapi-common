@@ -65,7 +65,11 @@ jobs:
         uses: EndBug/add-and-commit@v7
         with:
           default_author: github_actions
-          message: "Preparing new tag ${{ github.event.inputs.new-tag }}"
+          message: "Preparing new tag ${{ inputs.new-tag }}"
           add: "**/*.py Dockerfile.* api-docs"
           push: false
-          tag: ${{ inputs.new-tag }}
+
+      - name: Tag and Push
+        run: |
+          git tag ${{ inputs.new-tag }}
+          git push origin ${{ inputs.new-tag }}
