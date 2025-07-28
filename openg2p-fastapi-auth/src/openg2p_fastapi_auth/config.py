@@ -15,9 +15,7 @@ class ApiAuthSettings(BaseModel):
 
 
 class Settings(BaseSettings):
-    model_config = SettingsConfigDict(
-        env_prefix="common_", env_file=".env", extra="allow"
-    )
+    model_config = SettingsConfigDict(env_prefix="common_", env_file=".env", extra="allow")
 
     login_providers_table_name: str = "login_providers"
 

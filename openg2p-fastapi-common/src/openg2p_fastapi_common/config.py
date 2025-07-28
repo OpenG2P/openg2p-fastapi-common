@@ -2,6 +2,7 @@
 import os
 from enum import Enum
 from pathlib import Path
+from typing import Self, Type
 
 from pydantic import model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -17,9 +18,7 @@ class WorkerType(Enum):
 
 
 class Settings(BaseSettings):
-    model_config = SettingsConfigDict(
-        env_prefix="common_", env_file=".env", extra="allow"
-    )
+    model_config = SettingsConfigDict(env_prefix="common_", env_file=".env", extra="allow")
 
     host: str = "0.0.0.0"
     port: int = 8000
@@ -64,8 +63,17 @@ class Settings(BaseSettings):
 
     error_response_debug: bool = False
 
+    keymanager_api_base_url: str = ""
+    keymanager_api_timeout: int = 10
+    keymanager_api_domain: str = "AUTH"
+    keymanager_ssl_verify: bool = False
+    keymanager_auth_enabled: bool = True
+    keymanager_auth_url: str = ""
+    keymanager_auth_client_id: str = "openg2p"
+    keymanager_auth_client_secret: str = ""
+
     @model_validator(mode="after")
-    def validate_db_datasource(self) -> "Settings":
+    def validate_db_datasource(self) -> Self:
         if self.db_datasource:
             return self
         datasource = ""
@@ -85,13 +93,13 @@ class Settings(BaseSettings):
         return self
 
     @model_validator(mode="after")
-    def validate_worker_ids_and_pod_ids(self) -> "Settings":
+    def validate_worker_ids_and_pod_ids(self) -> Self:
         self.set_current_worker_id()
         self.set_current_docker_pod_id()
         return self
 
     @classmethod
-    def get_config(cls, strict=True):
+    def get_config(cls: Type[Self], strict=True) -> Self:
         result = None
         for config in config_registry.get():
             if strict:
@@ -118,9 +126,7 @@ class Settings(BaseSettings):
                 [
                     int(a)
                     for a in str(
-                        subprocess.check_output(
-                            ["pgrep", "-f", self.worker_type.value]
-                        ),
+                        subprocess.check_output(["pgrep", "-f", self.worker_type.value]),
                         "UTF-8",
                     ).split("\n")
                     if a

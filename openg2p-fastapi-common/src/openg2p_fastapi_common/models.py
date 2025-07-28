@@ -54,6 +54,4 @@ class BaseORMModelWithTimes(BaseORMModelWithId):
     __abstract__ = True
 
     created_at: Mapped[datetime] = mapped_column(DateTime(), default=datetime.utcnow)
-    updated_at: Mapped[Optional[datetime]] = mapped_column(
-        DateTime(), default=datetime.utcnow
-    )
+    updated_at: Mapped[Optional[datetime]] = mapped_column(DateTime(), default=datetime.utcnow)

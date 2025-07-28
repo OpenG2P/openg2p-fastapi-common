@@ -19,9 +19,7 @@ class OauthProviderParameters(BaseModel):
 
     client_id: str
     client_secret: Optional[str] = None
-    client_assertion_type: OauthClientAssertionType = (
-        OauthClientAssertionType.client_secret
-    )
+    client_assertion_type: OauthClientAssertionType = OauthClientAssertionType.client_secret
     client_assertion_jwk: Optional[Union[Dict, str, bytes]] = None
     client_assertion_jwt_aud: Optional[str] = None
 
@@ -37,9 +35,7 @@ class OauthProviderParameters(BaseModel):
     @model_validator(mode="after")
     def code_challenge_validator(self) -> "OauthProviderParameters":
         self.code_challenge = (
-            base64.urlsafe_b64encode(
-                hashlib.sha256(self.code_verifier.encode("ascii")).digest()
-            )
+            base64.urlsafe_b64encode(hashlib.sha256(self.code_verifier.encode("ascii")).digest())
             .rstrip(b"=")
             .decode()
         )

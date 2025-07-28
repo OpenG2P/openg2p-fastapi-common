@@ -1,5 +1,9 @@
 """Module from initializing Component Class"""
 
+from collections.abc import Callable
+from functools import cached_property
+from typing import Any, Self, Type
+
 from .context import component_registry
 
 
@@ -9,7 +13,7 @@ class BaseComponent:
         component_registry.get().append(self)
 
     @classmethod
-    def get_component(cls, name="", strict=False):
+    def get_component(cls: Type[Self], name="", strict=False) -> Self:
         for component in component_registry.get():
             result = None
             if strict:
@@ -26,3 +30,9 @@ class BaseComponent:
                 else:
                     return result
         return None
+
+    @classmethod
+    def get_cached_component(
+        cls: Type[Self], name="", strict=False, **kw
+    ) -> cached_property[Callable[[Any], Self]]:
+        return cached_property(lambda _: cls.get_component(name=name, strict=strict, **kw))

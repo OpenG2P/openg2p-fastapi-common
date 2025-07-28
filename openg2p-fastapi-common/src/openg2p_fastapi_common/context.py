@@ -9,9 +9,7 @@ from sqlalchemy.ext.asyncio import AsyncEngine
 
 app_registry: ContextVar[Optional[FastAPI]] = ContextVar("app_registry", default=None)
 
-config_registry: ContextVar[List[BaseSettings]] = ContextVar(
-    "config_registry", default=[]
-)
+config_registry: ContextVar[List[BaseSettings]] = ContextVar("config_registry", default=[])
 
 # The following is a list of BaseComponents
 component_registry: ContextVar[List] = ContextVar("component_registry", default=[])

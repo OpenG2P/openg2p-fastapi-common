@@ -22,6 +22,8 @@ _logger = logging.getLogger(_config.logging_default_logger_name)
 
 
 class OAuthController(BaseController):
+    auth_controller: AuthController = AuthController.get_cached_component()
+
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.router.prefix += "/oauth2"
@@ -32,14 +34,6 @@ class OAuthController(BaseController):
             self.oauth_callback,
             methods=["GET"],
         )
-
-        self._auth_controller = AuthController.get_component()
-
-    @property
-    def auth_controller(self):
-        if not self._auth_controller:
-            self._auth_controller = AuthController.get_component()
-        return self._auth_controller
 
     async def oauth_callback(self, request: Request):
         """
@@ -54,14 +48,10 @@ class OAuthController(BaseController):
         if not login_provider_id:
             raise UnauthorizedError("G2P-AUT-401", "Login Provider Id not received")
 
-        login_provider = await self.auth_controller.get_login_provider_db_by_id(
-            login_provider_id
-        )
+        login_provider = await self.auth_controller.get_login_provider_db_by_id(login_provider_id)
 
         if login_provider.type == LoginProviderTypes.oauth2_auth_code:
-            auth_parameters = OauthProviderParameters.model_validate(
-                login_provider.authorization_parameters
-            )
+            auth_parameters = OauthProviderParameters.model_validate(login_provider.authorization_parameters)
             token_request_data = {
                 "client_id": auth_parameters.client_id,
                 "grant_type": "authorization_code",
@@ -72,10 +62,7 @@ class OAuthController(BaseController):
                 token_request_data["code_verifier"] = auth_parameters.code_verifier
 
             token_auth = None
-            if (
-                auth_parameters.client_assertion_type
-                == OauthClientAssertionType.private_key_jwt
-            ):
+            if auth_parameters.client_assertion_type == OauthClientAssertionType.private_key_jwt:
                 token_request_data.update(
                     {
                         "client_assertion_type": auth_parameters.client_assertion_type,
@@ -93,10 +80,7 @@ class OAuthController(BaseController):
                         ),
                     }
                 )
-            elif (
-                auth_parameters.client_assertion_type
-                == OauthClientAssertionType.client_secret
-            ):
+            elif auth_parameters.client_assertion_type == OauthClientAssertionType.client_secret:
                 token_auth = (auth_parameters.client_id, auth_parameters.client_secret)
             try:
                 res = httpx.post(
@@ -111,9 +95,7 @@ class OAuthController(BaseController):
                     "Error while fetching token from token endpoint, %s",
                     auth_parameters.token_endpoint,
                 )
-                raise UnauthorizedError(
-                    message="Unauthorized. Failed to get token from Oauth Server"
-                ) from e
+                raise UnauthorizedError(message="Unauthorized. Failed to get token from Oauth Server") from e
 
             config_dict = _config.model_dump()
             access_token: str = res["access_token"]
@@ -122,9 +104,7 @@ class OAuthController(BaseController):
             if config_dict.get("auth_cookie_set_expires", False):
                 expires_in = res.get("expires_in", None)
                 if expires_in:
-                    expires_in = datetime.now(tz=timezone.utc) + timedelta(
-                        seconds=expires_in
-                    )
+                    expires_in = datetime.now(tz=timezone.utc) + timedelta(seconds=expires_in)
 
             response = RedirectResponse(state.get("r", "/"))
             response.set_cookie(

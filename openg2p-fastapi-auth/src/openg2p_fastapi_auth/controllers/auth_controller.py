@@ -127,9 +127,7 @@ class AuthController(BaseController):
             )
 
         if login_provider.type == LoginProviderTypes.oauth2_auth_code:
-            auth_parameters = OauthProviderParameters.model_validate(
-                login_provider.authorization_parameters
-            )
+            auth_parameters = OauthProviderParameters.model_validate(login_provider.authorization_parameters)
             authorize_query_params = {
                 "client_id": auth_parameters.client_id,
                 "response_type": auth_parameters.response_type,
@@ -178,16 +176,10 @@ class AuthController(BaseController):
         access_token = auth.credentials if isinstance(auth, AuthCredentials) else auth
         if not provider:
             if not iss:
-                iss = (
-                    jwt.get_unverified_claims(access_token)["iss"]
-                    if isinstance(auth, str)
-                    else auth.iss
-                )
+                iss = jwt.get_unverified_claims(access_token)["iss"] if isinstance(auth, str) else auth.iss
             provider = await self.get_login_provider_db_by_iss(iss)
         # TODO: Check if provider is None
-        auth_params = OauthProviderParameters.model_validate(
-            provider.authorization_parameters
-        )
+        auth_params = OauthProviderParameters.model_validate(provider.authorization_parameters)
         try:
             response = httpx.get(
                 auth_params.validate_endpoint,
