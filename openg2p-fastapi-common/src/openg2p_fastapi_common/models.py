@@ -1,7 +1,7 @@
 """Module containing base models"""
 
-from datetime import datetime
-from typing import List, Optional
+from datetime import datetime, timezone
+from typing import Self
 
 from sqlalchemy import DateTime, select
 from sqlalchemy.ext.asyncio import async_sessionmaker
@@ -27,7 +27,7 @@ class BaseORMModelWithId(BaseORMModel):
     active: Mapped[bool] = mapped_column()
 
     @classmethod
-    async def get_by_id(cls, id: int, active=True) -> "BaseORMModelWithId":
+    async def get_by_id(cls, id: int, active=True) -> Self:
         result = None
         async_session_maker = async_sessionmaker(dbengine.get())
         async with async_session_maker() as session:
@@ -38,7 +38,7 @@ class BaseORMModelWithId(BaseORMModel):
         return result
 
     @classmethod
-    async def get_all(cls, active=True) -> List["BaseORMModelWithId"]:
+    async def get_all(cls, active=True) -> list[Self]:
         response = []
         async_session_maker = async_sessionmaker(dbengine.get())
         async with async_session_maker() as session:
@@ -53,5 +53,9 @@ class BaseORMModelWithId(BaseORMModel):
 class BaseORMModelWithTimes(BaseORMModelWithId):
     __abstract__ = True
 
-    created_at: Mapped[datetime] = mapped_column(DateTime(), default=datetime.utcnow)
-    updated_at: Mapped[Optional[datetime]] = mapped_column(DateTime(), default=datetime.utcnow)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(), default=lambda: datetime.now(timezone.utc).replace(tzinfo=None)
+    )
+    updated_at: Mapped[datetime | None] = mapped_column(
+        DateTime(), default=lambda: datetime.now(timezone.utc).replace(tzinfo=None)
+    )

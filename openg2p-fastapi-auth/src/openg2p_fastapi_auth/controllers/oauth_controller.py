@@ -72,8 +72,8 @@ class OAuthController(BaseController):
                                 "sub": auth_parameters.client_id,
                                 "aud": auth_parameters.client_assertion_jwt_aud
                                 or auth_parameters.token_endpoint,
-                                "exp": datetime.utcnow() + timedelta(hours=1),
-                                "iat": datetime.utcnow(),
+                                "iat": datetime.now(timezone.utc).replace(tzinfo=None),
+                                "exp": datetime.now(timezone.utc).replace(tzinfo=None) + timedelta(hours=1),
                             },
                             auth_parameters.client_assertion_jwk,
                             algorithm="RS256",

@@ -1,7 +1,7 @@
 import logging
 import secrets
 import urllib.parse
-from typing import Annotated, List, Union
+from typing import Annotated
 
 import httpx
 import orjson
@@ -156,7 +156,7 @@ class AuthController(BaseController):
         else:
             raise NotImplementedError()
 
-    async def get_login_providers_db(self) -> List[LoginProvider]:
+    async def get_login_providers_db(self) -> list[LoginProvider]:
         return await LoginProvider.get_all()
 
     async def get_login_provider_db_by_id(self, id: int) -> LoginProvider:
@@ -167,7 +167,7 @@ class AuthController(BaseController):
 
     async def get_oauth_validation_data(
         self,
-        auth: Union[str, AuthCredentials],
+        auth: str | AuthCredentials,
         id_token: str = None,
         iss: str = None,
         provider: LoginProvider = None,

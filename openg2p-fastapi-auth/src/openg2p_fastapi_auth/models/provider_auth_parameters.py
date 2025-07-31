@@ -1,7 +1,6 @@
 import base64
 import enum
 import hashlib
-from typing import Dict, Optional, Union
 
 from pydantic import BaseModel, model_validator
 
@@ -18,10 +17,10 @@ class OauthProviderParameters(BaseModel):
     jwks_endpoint: str
 
     client_id: str
-    client_secret: Optional[str] = None
+    client_secret: str | None = None
     client_assertion_type: OauthClientAssertionType = OauthClientAssertionType.client_secret
-    client_assertion_jwk: Optional[Union[Dict, str, bytes]] = None
-    client_assertion_jwt_aud: Optional[str] = None
+    client_assertion_jwk: dict | str | bytes | None = None
+    client_assertion_jwt_aud: str | None = None
 
     response_type: str = "code"
     redirect_uri: str

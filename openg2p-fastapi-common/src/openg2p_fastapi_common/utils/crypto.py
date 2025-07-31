@@ -5,14 +5,31 @@ from datetime import datetime, timedelta, timezone
 import httpx
 import orjson
 
-from .config import Settings
-from .service import BaseService
+from ..config import Settings
+from ..service import BaseService
 
 _config = Settings.get_config(strict=False)
 _logger = logging.getLogger(_config.logging_default_logger_name)
 
 
-class KeymanagerHelper(BaseService):
+class CryptoHelper(BaseService):
+    async def aclose(self):
+        """Closes Crypto Helper"""
+
+    async def verify_jwt(self, orig_jwt: str, payload=None, **kw) -> bool:
+        """Verify the jwt given in the request, replies with boolean validity."""
+        raise NotImplementedError()
+
+    async def create_jwt_token(
+        self, payload, include_payload=False, include_certificate=False, include_cert_hash=False, **kw
+    ) -> str:
+        """Creates a JWT token for the given payload"""
+        raise NotImplementedError()
+
+    # TODO: more interfaces defined as per requirement
+
+
+class KeymanagerCryptoHelper(CryptoHelper):
     def __init__(
         self,
         api_base_url=_config.keymanager_api_base_url,
@@ -23,6 +40,8 @@ class KeymanagerHelper(BaseService):
         api_domain=_config.keymanager_api_domain,
         ssl_verify=_config.keymanager_ssl_verify,
         api_timeout=_config.keymanager_api_timeout,
+        sign_app_id=_config.keymanager_sign_app_id,
+        sign_ref_id=_config.keymanager_sign_ref_id,
         **kw,
     ):
         super().__init__(**kw)
@@ -34,6 +53,8 @@ class KeymanagerHelper(BaseService):
         self.auth_client_secret = auth_client_secret
 
         self.api_domain = api_domain
+        self.sign_app_id = sign_app_id
+        self.sign_ref_id = sign_ref_id
 
         self.auth_token = ""
         self.auth_token_expiry: datetime | None = None
@@ -43,14 +64,7 @@ class KeymanagerHelper(BaseService):
     async def aclose(self):
         await self.http_client.aclose()
 
-    async def verify_jwt(
-        self,
-        orig_jwt: str,
-        payload=None,
-        keymanager_app_id="",
-        keymanager_ref_id="",
-        **kw,
-    ) -> bool:
+    async def verify_jwt(self, orig_jwt: str, payload=None, **kw) -> bool:
         # If payload not None, perform payload validation also.
         if payload is None:
             actual_data = None
@@ -66,6 +80,9 @@ class KeymanagerHelper(BaseService):
             # Reconstruct full JWT
             final_jwt = f"{part1}.{actual_data}.{part3}"
 
+        km_app_id = self.get_verify_app_id(orig_jwt, payload=payload, **kw)
+        km_ref_id = self.get_verify_ref_id(payload, **kw)
+
         # Send request to external service for verification
         cookies = {}
         if self.auth_enabled:
@@ -80,8 +97,8 @@ class KeymanagerHelper(BaseService):
                 "request": {
                     "jwtSignatureData": final_jwt,
                     "actualData": actual_data,
-                    "applicationId": keymanager_app_id,
-                    "referenceId": keymanager_ref_id,
+                    "applicationId": km_app_id,
+                    "referenceId": km_ref_id,
                     "certificateData": "",
                     "validateTrust": False,
                     "domain": self.api_domain,
@@ -98,14 +115,11 @@ class KeymanagerHelper(BaseService):
             raise e
 
     async def create_jwt_token(
-        self,
-        payload,
-        keymanager_app_id="",
-        keymanager_ref_id="",
-        include_payload=False,
-        include_certificate=False,
-        include_cert_hash=False,
+        self, payload, include_payload=False, include_certificate=False, include_cert_hash=False, **kw
     ) -> str:
+        km_app_id = self.get_sign_app_id(payload, **kw)
+        km_ref_id = self.get_sign_ref_id(payload, **kw)
+
         cookies = {}
         if self.auth_enabled:
             cookies["Authorization"] = await self.get_auth_token()
@@ -118,8 +132,8 @@ class KeymanagerHelper(BaseService):
                 "metadata": {},
                 "request": {
                     "dataToSign": self.base64url_encode(self.treat_payload_types(payload)),
-                    "applicationId": keymanager_app_id,
-                    "referenceId": keymanager_ref_id,
+                    "applicationId": km_app_id,
+                    "referenceId": km_ref_id,
                     "includePayload": include_payload,
                     "includeCertificate": include_certificate,
                     "includeCertHash": include_cert_hash,
@@ -134,6 +148,18 @@ class KeymanagerHelper(BaseService):
             _logger.debug("Keymanager JWT Sign API response: %s", response.text)
             _logger.exception("KeymanagerHelper: Error creating JWT")
             raise e
+
+    async def get_verify_app_id(self, orig_jwt: str, payload=None, **kw):
+        return self.sign_app_id
+
+    async def get_verify_ref_id(self, payload, **kw):
+        return self.sign_ref_id
+
+    async def get_sign_app_id(self, payload, **kw):
+        return self.sign_app_id
+
+    async def get_sign_ref_id(self, payload, **kw):
+        return self.sign_ref_id
 
     async def get_auth_token(self) -> str:
         if self.auth_token and self.auth_token_expiry and self.auth_token_expiry > datetime.now(timezone.utc):

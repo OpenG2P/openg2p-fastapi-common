@@ -2,7 +2,7 @@
 import os
 from enum import Enum
 from pathlib import Path
-from typing import Self, Type
+from typing import Self
 
 from pydantic import model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -18,7 +18,9 @@ class WorkerType(Enum):
 
 
 class Settings(BaseSettings):
-    model_config = SettingsConfigDict(env_prefix="common_", env_file=".env", extra="allow")
+    model_config = SettingsConfigDict(
+        env_prefix="common_", env_file=".env", extra="allow", env_nested_delimiter="__"
+    )
 
     host: str = "0.0.0.0"
     port: int = 8000
@@ -71,6 +73,8 @@ class Settings(BaseSettings):
     keymanager_auth_url: str = ""
     keymanager_auth_client_id: str = "openg2p"
     keymanager_auth_client_secret: str = ""
+    keymanager_sign_app_id: str = "OPENG2P"
+    keymanager_sign_ref_id: str = ""
 
     @model_validator(mode="after")
     def validate_db_datasource(self) -> Self:
@@ -99,9 +103,13 @@ class Settings(BaseSettings):
         return self
 
     @classmethod
-    def get_config(cls: Type[Self], strict=True) -> Self:
+    def get_config(cls, strict=True) -> Self:
         result = None
-        for config in config_registry.get():
+        cr = config_registry.get()
+        if not cr:
+            cr = []
+            config_registry.set(cr)
+        for config in cr:
             if strict:
                 if cls is type(config):
                     result = config
@@ -112,7 +120,7 @@ class Settings(BaseSettings):
                     break
         if not result:
             result = cls()
-            config_registry.get().append(result)
+            cr.append(result)
         return result
 
     def set_current_worker_id(self):

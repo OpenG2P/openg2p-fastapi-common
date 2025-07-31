@@ -1,5 +1,3 @@
-from typing import Optional
-
 import httpx
 from fastapi import Request
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
@@ -18,7 +16,7 @@ _config = Settings.get_config(strict=False)
 
 
 class JwtBearerAuth(HTTPBearer):
-    async def __call__(self, request: Request) -> Optional[HTTPAuthorizationCredentials]:
+    async def __call__(self, request: Request) -> HTTPAuthorizationCredentials | None:
         config_dict = _config.model_dump()
         if not config_dict.get("auth_enabled", None):
             return None
@@ -63,7 +61,11 @@ class JwtBearerAuth(HTTPBearer):
             ):
                 raise UnauthorizedError(message="Unauthorized. Unknown Audience.")
 
-        jwks = jwks_cache.get().get(iss, None)
+        jc = jwks_cache.get()
+        if not jc:
+            jc = {}
+            jwks_cache.set(jc)
+        jwks = jc.get(iss, None)
 
         if not jwks:
             try:
@@ -77,7 +79,7 @@ class JwtBearerAuth(HTTPBearer):
                 res = httpx.get(jwks_url)
                 res.raise_for_status()
                 jwks = res.json()
-                jwks_cache.get()[iss] = jwks
+                jc[iss] = jwks
             except Exception as e:
                 raise InternalServerError(
                     code="G2P-AUT-500",
