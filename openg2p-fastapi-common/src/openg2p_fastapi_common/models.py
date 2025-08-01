@@ -1,7 +1,12 @@
 """Module containing base models"""
 
+import sys
 from datetime import datetime, timezone
-from typing import Self
+
+if sys.version_info >= (3, 11):
+    from typing import Self
+else:
+    from typing_extensions import Self
 
 from sqlalchemy import DateTime, inspect, select
 from sqlalchemy.ext.asyncio import async_sessionmaker

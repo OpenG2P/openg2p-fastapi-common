@@ -1,9 +1,14 @@
 """Module initializing configs"""
 
 import os
+import sys
 from enum import Enum
 from pathlib import Path
-from typing import Self
+
+if sys.version_info >= (3, 11):
+    from typing import Self
+else:
+    from typing_extensions import Self
 
 from pydantic import model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict

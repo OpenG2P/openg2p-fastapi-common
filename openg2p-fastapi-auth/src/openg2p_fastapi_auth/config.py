@@ -1,5 +1,3 @@
-from typing import Self
-
 from openg2p_fastapi_common.config import Settings as BaseSettings
 from pydantic import BaseModel, model_validator
 from pydantic_settings import SettingsConfigDict
@@ -41,7 +39,7 @@ class Settings(BaseSettings):
     auth_api_get_profile: ApiAuthSettings = ApiAuthSettings(enabled=True)
 
     @model_validator(mode="after")
-    def validate_login_providers_list(self) -> Self:
+    def validate_login_providers_list(self):
         if self.login_providers_list:
             code_verifier = self.login_providers_list_pkce_code_verifier
             self.login_providers_list.sort(key=lambda x: x.get("id"))
