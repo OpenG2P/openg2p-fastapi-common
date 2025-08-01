@@ -22,10 +22,22 @@ class NotFoundError(BaseAppException):
 
 
 class MethodNotAllowedError(BaseAppException):
-    def __init__(self, code="G2P-REQ-405", message="Method Not Allowed", http_status_code=405, **kwargs):
+    def __init__(
+        self,
+        code="G2P-REQ-405",
+        message="Method Not Allowed",
+        http_status_code=405,
+        **kwargs,
+    ):
         super().__init__(code, message, http_status_code, **kwargs)
 
 
 class InternalServerError(BaseAppException):
-    def __init__(self, code="G2P-REQ-500", message="Internal Server Error", http_status_code=500, **kwargs):
+    def __init__(
+        self,
+        code="G2P-REQ-500",
+        message="Internal Server Error",
+        http_status_code=500,
+        **kwargs,
+    ):
         super().__init__(code, message, http_status_code, **kwargs)

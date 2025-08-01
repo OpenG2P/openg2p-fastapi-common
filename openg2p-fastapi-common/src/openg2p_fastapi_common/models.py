@@ -74,8 +74,8 @@ class BaseORMModelWithTimes(BaseORMModelWithId):
     __abstract__ = True
 
     created_at: Mapped[datetime] = mapped_column(
-        DateTime(), default=lambda: datetime.now(timezone.utc).replace(tzinfo=None)
+        DateTime(), default=lambda: datetime.now(tz=timezone.utc).replace(tzinfo=None)
     )
     updated_at: Mapped[datetime | None] = mapped_column(
-        DateTime(), default=lambda: datetime.now(timezone.utc).replace(tzinfo=None)
+        DateTime(), default=lambda: datetime.now(tz=timezone.utc).replace(tzinfo=None)
     )

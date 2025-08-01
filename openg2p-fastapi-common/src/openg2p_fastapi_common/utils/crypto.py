@@ -21,7 +21,12 @@ class CryptoHelper(BaseService):
         raise NotImplementedError()
 
     async def create_jwt_token(
-        self, payload, include_payload=True, include_certificate=False, include_cert_hash=False, **kw
+        self,
+        payload,
+        include_payload=True,
+        include_certificate=False,
+        include_cert_hash=False,
+        **kw,
     ) -> str:
         """Creates a JWT token for the given payload"""
         raise NotImplementedError()
@@ -173,7 +178,11 @@ class KeymanagerCryptoHelper(CryptoHelper):
         return self.sign_ref_id
 
     async def get_auth_token(self) -> str:
-        if self.auth_token and self.auth_token_expiry and self.auth_token_expiry > datetime.now(timezone.utc):
+        if (
+            self.auth_token
+            and self.auth_token_expiry
+            and self.auth_token_expiry > datetime.now(tz=timezone.utc)
+        ):
             return self.auth_token
         response = await self.http_client.post(
             self.auth_url,
@@ -185,7 +194,7 @@ class KeymanagerCryptoHelper(CryptoHelper):
         )
         response_data = response.json()
         expires_in = response_data.get("expires_in", 900)
-        self.auth_token_expiry = datetime.now(timezone.utc) + timedelta(seconds=expires_in)
+        self.auth_token_expiry = datetime.now(tz=timezone.utc) + timedelta(seconds=expires_in)
         self.auth_token = response_data["access_token"]
         return self.auth_token
 
@@ -201,4 +210,4 @@ class KeymanagerCryptoHelper(CryptoHelper):
         return base64.urlsafe_b64encode(input).decode().rstrip("=")
 
     def get_current_isotimestamp(self) -> str:
-        return f'{datetime.now().isoformat(timespec = "milliseconds")}Z'
+        return f"{datetime.now(tz=timezone.utc).replace(tzinfo=None).isoformat(timespec='milliseconds')}Z"

@@ -1,4 +1,5 @@
 """Module containing initialization instructions and FastAPI app"""
+
 import argparse
 import logging
 import sys
