@@ -1,5 +1,7 @@
+from typing import Self
+
 from openg2p_fastapi_common.config import Settings as BaseSettings
-from pydantic import BaseModel
+from pydantic import BaseModel, model_validator
 from pydantic_settings import SettingsConfigDict
 
 
@@ -17,7 +19,10 @@ class Settings(BaseSettings):
         env_prefix="common_", env_file=".env", extra="allow", env_nested_delimiter="__"
     )
 
+    login_providers_table_enabled: bool = True
     login_providers_table_name: str = "login_providers"
+    login_providers_list: list[dict] = []
+    login_providers_list_pkce_code_verifier: str | None = None
 
     auth_enabled: bool = True
 
@@ -34,3 +39,23 @@ class Settings(BaseSettings):
     auth_default_id_token_verify_at_hash: bool = True
 
     auth_api_get_profile: ApiAuthSettings = ApiAuthSettings(enabled=True)
+
+    @model_validator(mode="after")
+    def validate_login_providers_list(self) -> Self:
+        if self.login_providers_list:
+            code_verifier = self.login_providers_list_pkce_code_verifier
+            self.login_providers_list.sort(key=lambda x: x.get("id"))
+
+            from .models.login_provider import LoginProviderTypes
+
+            for lp in self.login_providers_list:
+                if "type" in lp:
+                    lp["type"] = LoginProviderTypes[lp["type"]]
+
+                lp_auth_params = lp.get("authorization_parameters") or {}
+                if code_verifier and lp_auth_params.get("enabled_pkce"):
+                    lp_auth_params["code_verifier"] = code_verifier
+
+            if not self.auth_default_issuers:
+                self.auth_default_issuers = [lp.get("iss") for lp in self.login_providers_list]
+        return self

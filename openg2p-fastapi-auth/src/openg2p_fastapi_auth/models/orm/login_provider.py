@@ -1,4 +1,3 @@
-from enum import Enum
 from typing import Self
 
 from openg2p_fastapi_common.models import BaseORMModelWithTimes
@@ -7,15 +6,13 @@ from sqlalchemy import Enum as SaEnum
 from sqlalchemy.orm import Mapped, mapped_column
 
 from ...config import Settings
+from ..login_provider import LoginProviderTypes
 
 _config = Settings.get_config(strict=False)
 
 
-class LoginProviderTypes(Enum):
-    oauth2_auth_code = "oauth2_auth_code"
-
-
 class LoginProvider(BaseORMModelWithTimes):
+    __enabled__ = _config.login_providers_table_enabled
     __tablename__ = _config.login_providers_table_name
 
     name: Mapped[str] = mapped_column(String())

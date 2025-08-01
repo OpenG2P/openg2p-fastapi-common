@@ -21,7 +21,7 @@ class CryptoHelper(BaseService):
         raise NotImplementedError()
 
     async def create_jwt_token(
-        self, payload, include_payload=False, include_certificate=False, include_cert_hash=False, **kw
+        self, payload, include_payload=True, include_certificate=False, include_cert_hash=False, **kw
     ) -> str:
         """Creates a JWT token for the given payload"""
         raise NotImplementedError()
@@ -64,7 +64,7 @@ class KeymanagerCryptoHelper(CryptoHelper):
     async def aclose(self):
         await self.http_client.aclose()
 
-    async def verify_jwt(self, orig_jwt: str, payload=None, **kw) -> bool:
+    async def verify_jwt(self, orig_jwt: str, payload=None, km_app_id=None, km_ref_id=None, **kw) -> bool:
         # If payload not None, perform payload validation also.
         if payload is None:
             actual_data = None
@@ -80,8 +80,10 @@ class KeymanagerCryptoHelper(CryptoHelper):
             # Reconstruct full JWT
             final_jwt = f"{part1}.{actual_data}.{part3}"
 
-        km_app_id = self.get_verify_app_id(orig_jwt, payload=payload, **kw)
-        km_ref_id = self.get_verify_ref_id(payload, **kw)
+        if km_app_id is None:
+            km_app_id = self.get_verify_app_id(orig_jwt, payload=payload, **kw)
+        if km_ref_id is None:
+            km_ref_id = self.get_verify_ref_id(payload, **kw)
 
         # Send request to external service for verification
         cookies = {}
@@ -115,10 +117,19 @@ class KeymanagerCryptoHelper(CryptoHelper):
             raise e
 
     async def create_jwt_token(
-        self, payload, include_payload=False, include_certificate=False, include_cert_hash=False, **kw
+        self,
+        payload,
+        include_payload=True,
+        include_certificate=False,
+        include_cert_hash=False,
+        km_app_id=None,
+        km_ref_id=None,
+        **kw,
     ) -> str:
-        km_app_id = self.get_sign_app_id(payload, **kw)
-        km_ref_id = self.get_sign_ref_id(payload, **kw)
+        if km_app_id is None:
+            km_app_id = self.get_sign_app_id(payload, **kw)
+        if km_ref_id is None:
+            km_ref_id = self.get_sign_ref_id(payload, **kw)
 
         cookies = {}
         if self.auth_enabled:

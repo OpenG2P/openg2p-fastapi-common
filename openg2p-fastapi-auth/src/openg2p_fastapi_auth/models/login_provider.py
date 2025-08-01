@@ -1,6 +1,10 @@
+from enum import Enum
+
 from pydantic import BaseModel
 
-from .orm.login_provider import LoginProviderTypes
+
+class LoginProviderTypes(Enum):
+    oauth2_auth_code = "oauth2_auth_code"
 
 
 class LoginProviderResponse(BaseModel):

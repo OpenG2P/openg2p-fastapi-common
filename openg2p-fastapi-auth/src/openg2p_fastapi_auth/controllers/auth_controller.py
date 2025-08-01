@@ -1,3 +1,5 @@
+import base64
+import hashlib
 import logging
 import secrets
 import urllib.parse
@@ -142,6 +144,8 @@ class AuthController(BaseController):
                 ).decode(),
             }
             if auth_parameters.enable_pkce:
+                await self.pkce_get_or_generate_code_verifier(login_provider)
+                self.pkce_update_code_challenge(auth_parameters)
                 authorize_query_params.update(
                     {
                         "code_challenge": auth_parameters.code_challenge,
@@ -156,14 +160,46 @@ class AuthController(BaseController):
         else:
             raise NotImplementedError()
 
+    async def pkce_get_or_generate_code_verifier(self, login_provider: LoginProvider) -> str:
+        code_verifier = login_provider.authorization_parameters.get("code_verifier")
+        if not code_verifier:
+            code_verifier = secrets.token_urlsafe(32)
+            login_provider.authorization_parameters["code_verifier"] = code_verifier
+            await login_provider.update_to_db()
+        return code_verifier
+
+    def pkce_update_code_challenge(self, auth_params: OauthProviderParameters):
+        if auth_params.code_challenge_method.lower() == "s256":
+            auth_params.code_challenge = (
+                base64.urlsafe_b64encode(hashlib.sha256(auth_params.code_verifier.encode("ascii")).digest())
+                .rstrip(b"=")
+                .decode()
+            )
+
     async def get_login_providers_db(self) -> list[LoginProvider]:
-        return await LoginProvider.get_all()
+        if _config.login_providers_list:
+            return [LoginProvider(**lp) for lp in _config.login_providers_list]
+        if await LoginProvider.table_exists_cached():
+            return await LoginProvider.get_all()
+        return None
 
     async def get_login_provider_db_by_id(self, id: int) -> LoginProvider:
-        return await LoginProvider.get_by_id(id)
+        if _config.login_providers_list:
+            return next(
+                (LoginProvider(**lp) for lp in _config.login_providers_list if id == lp.get("id")), None
+            )
+        if await LoginProvider.table_exists_cached():
+            return await LoginProvider.get_by_id(id)
+        return None
 
     async def get_login_provider_db_by_iss(self, iss: str) -> LoginProvider:
-        return await LoginProvider.get_login_provider_from_iss(iss)
+        if _config.login_providers_list:
+            return next(
+                (LoginProvider(**lp) for lp in _config.login_providers_list if iss == lp.get("iss")), None
+            )
+        if await LoginProvider.table_exists_cached():
+            return await LoginProvider.get_login_provider_from_iss(iss)
+        return None
 
     async def get_oauth_validation_data(
         self,

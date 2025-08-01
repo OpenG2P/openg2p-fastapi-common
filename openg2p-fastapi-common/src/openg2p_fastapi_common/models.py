@@ -3,7 +3,7 @@
 from datetime import datetime, timezone
 from typing import Self
 
-from sqlalchemy import DateTime, select
+from sqlalchemy import DateTime, inspect, select
 from sqlalchemy.ext.asyncio import async_sessionmaker
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
@@ -12,12 +12,32 @@ from .context import dbengine
 
 class BaseORMModel(DeclarativeBase):
     __enabled__ = True
+    __abstract__ = True
+    __allow_unmapped__ = True
+    __table_exists: bool | None = None
 
     @classmethod
     async def create_migrate(cls):
         if cls.__enabled__:
             async with dbengine.get().begin() as conn:
-                await conn.run_sync(cls.metadata.create_all)
+                await conn.run_sync(lambda sconn: cls.metadata.create_all(sconn, tables=[cls.__table__]))
+
+    @classmethod
+    async def table_exists_cached(cls) -> bool:
+        if cls.__abstract__:
+            return False
+        if cls.__table_exists is not None:
+            return cls.__table_exists
+        async with dbengine.get().begin() as conn:
+            inspector = inspect(conn)
+            cls.__table_exists = await inspector.has_table(cls.__tablename__)
+            return cls.__table_exists
+
+    async def update_to_db(self):
+        async_session_maker = async_sessionmaker(dbengine.get())
+        async with async_session_maker() as session:
+            await session.merge(self)
+            await session.commit()
 
 
 class BaseORMModelWithId(BaseORMModel):
