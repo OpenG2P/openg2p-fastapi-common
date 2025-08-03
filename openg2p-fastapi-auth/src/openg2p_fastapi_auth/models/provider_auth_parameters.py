@@ -1,14 +1,26 @@
-import base64
 import enum
-import hashlib
-from typing import Dict, Optional, Union
 
-from pydantic import BaseModel, model_validator
+from pydantic import BaseModel, field_validator
 
 
 class OauthClientAssertionType(enum.Enum):
-    private_key_jwt = "urn:ietf:params:oauth:client-assertion-type:jwt-bearer"
+    private_key_jwt = "private_key_jwt"
+    """Private Key JWT - jwt will be created using private key available in
+    OauthProviderParameters.client_assertion_jwk. The generated JWT will sent as client_assertion
+    in the token call."""
+
+    private_key_jwt_keymanager = "private_key_jwt_keymanager"
+    """Private Key JWT with Keymanager - jwt will be created using keymanager. The generated JWT will sent as
+    client_assertion in the token call."""
+
+    private_key_jwt_legacy = "urn:ietf:params:oauth:client-assertion-type:jwt-bearer"
+    """Private Key JWT Legacy - Same as `private_key_jwt`. Left of backward compat."""
+
+    client_secret_basic = "client_secret_basic"
+    """Client Secret - sent as basic auth for token call"""
+
     client_secret = "client_secret"
+    """Client Secret - sent in body of token call"""
 
 
 class OauthProviderParameters(BaseModel):
@@ -18,29 +30,26 @@ class OauthProviderParameters(BaseModel):
     jwks_endpoint: str
 
     client_id: str
-    client_secret: Optional[str] = None
-    client_assertion_type: OauthClientAssertionType = (
-        OauthClientAssertionType.client_secret
-    )
-    client_assertion_jwk: Optional[Union[Dict, str, bytes]] = None
-    client_assertion_jwt_aud: Optional[str] = None
+    client_secret: str | None = None
+    client_assertion_type: OauthClientAssertionType = OauthClientAssertionType.client_secret
+    client_assertion_jwk: dict | str | bytes | None = None
+    client_assertion_jwt_aud: str | None = None
+    client_assertion_jwk_keymanager: str | None = None
 
     response_type: str = "code"
     redirect_uri: str
     scope: str = "openid profile email"
-    enable_pkce: Optional[bool] = True
-    code_verifier: str
-    code_challenge: Optional[str] = None
+    enable_pkce: bool = True
+    code_verifier: str = ""
+    code_challenge: str = ""
     code_challenge_method: str = "S256"
     extra_authorize_parameters: dict = {}
 
-    @model_validator(mode="after")
-    def code_challenge_validator(self) -> "OauthProviderParameters":
-        self.code_challenge = (
-            base64.urlsafe_b64encode(
-                hashlib.sha256(self.code_verifier.encode("ascii")).digest()
-            )
-            .rstrip(b"=")
-            .decode()
-        )
-        return self
+    @field_validator("enable_pkce", mode="before")
+    @classmethod
+    def validate_pkce(cl, val):
+        if isinstance(val, bool) and val:
+            return True
+        elif isinstance(val, str) and val.lower() != "false":
+            return True
+        return False

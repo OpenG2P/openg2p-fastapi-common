@@ -4,9 +4,7 @@ from fastapi import HTTPException
 class BaseAppException(HTTPException):
     def __init__(self, code, message, http_status_code=500, headers=None, **kwargs):
         # TODO: Handle Multiple Exceptions
-        super().__init__(
-            status_code=http_status_code, detail=message, headers=headers, **kwargs
-        )
+        super().__init__(status_code=http_status_code, detail=message, headers=headers, **kwargs)
         self.code = code
         self.message = message
 

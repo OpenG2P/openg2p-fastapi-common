@@ -1,7 +1,9 @@
+import base64
+import hashlib
 import logging
 import secrets
 import urllib.parse
-from typing import Annotated, List, Union
+from typing import Annotated
 
 import httpx
 import orjson
@@ -127,9 +129,7 @@ class AuthController(BaseController):
             )
 
         if login_provider.type == LoginProviderTypes.oauth2_auth_code:
-            auth_parameters = OauthProviderParameters.model_validate(
-                login_provider.authorization_parameters
-            )
+            auth_parameters = OauthProviderParameters.model_validate(login_provider.authorization_parameters)
             authorize_query_params = {
                 "client_id": auth_parameters.client_id,
                 "response_type": auth_parameters.response_type,
@@ -144,6 +144,8 @@ class AuthController(BaseController):
                 ).decode(),
             }
             if auth_parameters.enable_pkce:
+                await self.pkce_get_or_generate_code_verifier(login_provider)
+                self.pkce_update_code_challenge(auth_parameters)
                 authorize_query_params.update(
                     {
                         "code_challenge": auth_parameters.code_challenge,
@@ -158,18 +160,52 @@ class AuthController(BaseController):
         else:
             raise NotImplementedError()
 
-    async def get_login_providers_db(self) -> List[LoginProvider]:
-        return await LoginProvider.get_all()
+    async def pkce_get_or_generate_code_verifier(self, login_provider: LoginProvider) -> str:
+        code_verifier = login_provider.authorization_parameters.get("code_verifier")
+        if not code_verifier:
+            code_verifier = secrets.token_urlsafe(32)
+            login_provider.authorization_parameters["code_verifier"] = code_verifier
+            await login_provider.update_to_db()
+        return code_verifier
+
+    def pkce_update_code_challenge(self, auth_params: OauthProviderParameters):
+        if auth_params.code_challenge_method.lower() == "s256":
+            auth_params.code_challenge = (
+                base64.urlsafe_b64encode(hashlib.sha256(auth_params.code_verifier.encode("ascii")).digest())
+                .rstrip(b"=")
+                .decode()
+            )
+
+    async def get_login_providers_db(self) -> list[LoginProvider]:
+        if _config.login_providers_list:
+            return [LoginProvider(**lp) for lp in _config.login_providers_list]
+        if await LoginProvider.table_exists_cached():
+            return await LoginProvider.get_all()
+        return None
 
     async def get_login_provider_db_by_id(self, id: int) -> LoginProvider:
-        return await LoginProvider.get_by_id(id)
+        if _config.login_providers_list:
+            return next(
+                (LoginProvider(**lp) for lp in _config.login_providers_list if id == lp.get("id")),
+                None,
+            )
+        if await LoginProvider.table_exists_cached():
+            return await LoginProvider.get_by_id(id)
+        return None
 
     async def get_login_provider_db_by_iss(self, iss: str) -> LoginProvider:
-        return await LoginProvider.get_login_provider_from_iss(iss)
+        if _config.login_providers_list:
+            return next(
+                (LoginProvider(**lp) for lp in _config.login_providers_list if iss == lp.get("iss")),
+                None,
+            )
+        if await LoginProvider.table_exists_cached():
+            return await LoginProvider.get_login_provider_from_iss(iss)
+        return None
 
     async def get_oauth_validation_data(
         self,
-        auth: Union[str, AuthCredentials],
+        auth: str | AuthCredentials,
         id_token: str = None,
         iss: str = None,
         provider: LoginProvider = None,
@@ -178,16 +214,10 @@ class AuthController(BaseController):
         access_token = auth.credentials if isinstance(auth, AuthCredentials) else auth
         if not provider:
             if not iss:
-                iss = (
-                    jwt.get_unverified_claims(access_token)["iss"]
-                    if isinstance(auth, str)
-                    else auth.iss
-                )
+                iss = jwt.get_unverified_claims(access_token)["iss"] if isinstance(auth, str) else auth.iss
             provider = await self.get_login_provider_db_by_iss(iss)
         # TODO: Check if provider is None
-        auth_params = OauthProviderParameters.model_validate(
-            provider.authorization_parameters
-        )
+        auth_params = OauthProviderParameters.model_validate(provider.authorization_parameters)
         try:
             response = httpx.get(
                 auth_params.validate_endpoint,

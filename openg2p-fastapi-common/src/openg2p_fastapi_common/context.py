@@ -1,19 +1,19 @@
 """Module for initializing Contexts"""
 
 from contextvars import ContextVar
-from typing import List, Optional
+from typing import TYPE_CHECKING
 
 from fastapi import FastAPI
 from pydantic_settings import BaseSettings
 from sqlalchemy.ext.asyncio import AsyncEngine
 
-app_registry: ContextVar[Optional[FastAPI]] = ContextVar("app_registry", default=None)
+if TYPE_CHECKING:
+    from .component import BaseComponent
 
-config_registry: ContextVar[List[BaseSettings]] = ContextVar(
-    "config_registry", default=[]
-)
+app_registry: ContextVar[FastAPI] = ContextVar("app_registry", default=None)
 
-# The following is a list of BaseComponents
-component_registry: ContextVar[List] = ContextVar("component_registry", default=[])
+config_registry: ContextVar[list[BaseSettings]] = ContextVar("config_registry", default=None)
+
+component_registry: ContextVar[list["BaseComponent"]] = ContextVar("component_registry", default=None)
 
 dbengine: ContextVar[AsyncEngine] = ContextVar("dbengine", default=None)

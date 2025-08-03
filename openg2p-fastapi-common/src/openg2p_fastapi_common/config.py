@@ -1,7 +1,14 @@
 """Module initializing configs"""
+
 import os
+import sys
 from enum import Enum
 from pathlib import Path
+
+if sys.version_info >= (3, 11):
+    from typing import Self
+else:
+    from typing_extensions import Self
 
 from pydantic import model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -18,7 +25,7 @@ class WorkerType(Enum):
 
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(
-        env_prefix="common_", env_file=".env", extra="allow"
+        env_prefix="common_", env_file=".env", extra="allow", env_nested_delimiter="__"
     )
 
     host: str = "0.0.0.0"
@@ -64,8 +71,19 @@ class Settings(BaseSettings):
 
     error_response_debug: bool = False
 
+    keymanager_api_base_url: str = ""
+    keymanager_api_timeout: int = 10
+    keymanager_api_domain: str = "AUTH"
+    keymanager_ssl_verify: bool = False
+    keymanager_auth_enabled: bool = True
+    keymanager_auth_url: str = ""
+    keymanager_auth_client_id: str = "openg2p"
+    keymanager_auth_client_secret: str = ""
+    keymanager_sign_app_id: str = "OPENG2P"
+    keymanager_sign_ref_id: str = ""
+
     @model_validator(mode="after")
-    def validate_db_datasource(self) -> "Settings":
+    def validate_db_datasource(self) -> Self:
         if self.db_datasource:
             return self
         datasource = ""
@@ -85,15 +103,19 @@ class Settings(BaseSettings):
         return self
 
     @model_validator(mode="after")
-    def validate_worker_ids_and_pod_ids(self) -> "Settings":
+    def validate_worker_ids_and_pod_ids(self) -> Self:
         self.set_current_worker_id()
         self.set_current_docker_pod_id()
         return self
 
     @classmethod
-    def get_config(cls, strict=True):
+    def get_config(cls, strict=True) -> Self:
         result = None
-        for config in config_registry.get():
+        cr = config_registry.get()
+        if not cr:
+            cr = []
+            config_registry.set(cr)
+        for config in cr:
             if strict:
                 if cls is type(config):
                     result = config
@@ -104,7 +126,7 @@ class Settings(BaseSettings):
                     break
         if not result:
             result = cls()
-            config_registry.get().append(result)
+            cr.append(result)
         return result
 
     def set_current_worker_id(self):
@@ -118,9 +140,7 @@ class Settings(BaseSettings):
                 [
                     int(a)
                     for a in str(
-                        subprocess.check_output(
-                            ["pgrep", "-f", self.worker_type.value]
-                        ),
+                        subprocess.check_output(["pgrep", "-f", self.worker_type.value]),
                         "UTF-8",
                     ).split("\n")
                     if a
