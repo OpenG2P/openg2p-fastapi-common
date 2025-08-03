@@ -1,19 +1,22 @@
 import enum
 
-from pydantic import BaseModel
+from pydantic import BaseModel, field_validator
 
 
 class OauthClientAssertionType(enum.Enum):
-    private_key_jwt = "urn:ietf:params:oauth:client-assertion-type:jwt-bearer"
+    private_key_jwt = "private_key_jwt"
     """Private Key JWT - jwt will be created using private key available in
     OauthProviderParameters.client_assertion_jwk. The generated JWT will sent as client_assertion
     in the token call."""
 
-    private_key_jwt_keymanager = "urn:ietf:params:oauth:client-assertion-type:jwt-bearer"
-    """Private Key JWT - jwt will be created using keymanager. The generated JWT will sent as
+    private_key_jwt_keymanager = "private_key_jwt_keymanager"
+    """Private Key JWT with Keymanager - jwt will be created using keymanager. The generated JWT will sent as
     client_assertion in the token call."""
 
-    client_secret_basic = "client_secret"
+    private_key_jwt_legacy = "urn:ietf:params:oauth:client-assertion-type:jwt-bearer"
+    """Private Key JWT Legacy - Same as `private_key_jwt`. Left of backward compat."""
+
+    client_secret_basic = "client_secret_basic"
     """Client Secret - sent as basic auth for token call"""
 
     client_secret = "client_secret"
@@ -41,3 +44,12 @@ class OauthProviderParameters(BaseModel):
     code_challenge: str = ""
     code_challenge_method: str = "S256"
     extra_authorize_parameters: dict = {}
+
+    @field_validator("enable_pkce", mode="before")
+    @classmethod
+    def validate_pkce(cl, val):
+        if isinstance(val, bool) and val:
+            return True
+        elif isinstance(val, str) and val.lower() != "false":
+            return True
+        return False

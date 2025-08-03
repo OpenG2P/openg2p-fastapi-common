@@ -99,12 +99,7 @@ class OAuthController(BaseController):
 
             token_auth = None
             if auth_parameters.client_assertion_type.name.startswith("private_key_jwt"):
-                token_request_data.update(
-                    {
-                        "client_assertion_type": auth_parameters.client_assertion_type,
-                        "client_assertion": await self.oauth_generate_client_assertion(auth_parameters, **kw),
-                    }
-                )
+                await self.oauth_update_client_assertion(auth_parameters, token_request_data, **kw)
             elif auth_parameters.client_assertion_type == OauthClientAssertionType.client_secret_basic:
                 token_auth = (auth_parameters.client_id, auth_parameters.client_secret)
             elif auth_parameters.client_assertion_type == OauthClientAssertionType.client_secret:
@@ -127,9 +122,15 @@ class OAuthController(BaseController):
         else:
             raise NotImplementedError()
 
-    async def oauth_generate_client_assertion(self, auth_parameters: OauthProviderParameters, **kw):
-        if auth_parameters.client_assertion_type == OauthClientAssertionType.private_key_jwt:
-            return jwt.encode(
+    async def oauth_update_client_assertion(
+        self, auth_parameters: OauthProviderParameters, token_request_data: dict, **kw
+    ):
+        if (
+            auth_parameters.client_assertion_type == OauthClientAssertionType.private_key_jwt
+            or auth_parameters.client_assertion_type == OauthClientAssertionType.private_key_jwt_legacy
+        ):
+            client_assertion_type = "urn:ietf:params:oauth:client-assertion-type:jwt-bearer"
+            client_assertion = jwt.encode(
                 {
                     "iss": auth_parameters.client_id,
                     "sub": auth_parameters.client_id,
@@ -141,9 +142,13 @@ class OAuthController(BaseController):
                 algorithm="RS256",
             )
         elif auth_parameters.client_assertion_type == OauthClientAssertionType.private_key_jwt_keymanager:
-            return await self.oauth_generate_client_assertion_keymanager(auth_parameters, **kw)
+            client_assertion_type = "urn:ietf:params:oauth:client-assertion-type:jwt-bearer"
+            client_assertion = await self.oauth_generate_client_assertion_keymanager(auth_parameters, **kw)
         else:
             raise NotImplementedError()
+        token_request_data.update(
+            {"client_assertion_type": client_assertion_type, "client_assertion": client_assertion}
+        )
 
     async def oauth_generate_client_assertion_keymanager(
         self, auth_parameters: OauthProviderParameters, **kw
