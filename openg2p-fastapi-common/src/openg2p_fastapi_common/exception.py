@@ -17,7 +17,7 @@ from .errors.http_exceptions import (
     UnauthorizedError,
 )
 
-_config = Settings.get_config()
+_config = Settings.get_config(strict=False)
 _logger = logging.getLogger(_config.logging_default_logger_name)
 
 
@@ -70,16 +70,10 @@ class BaseExceptionHandler(BaseComponent):
 
     async def unknown_exception_handler(self, request, exc):
         _logger.exception("Received Unknown Exception: %s", repr(exc))
-        exc_split = str(exc).split("::")
-        if len(exc_split) > 1:
-            code = exc_split[0]
-            message = exc_split[1]
-        elif _config.error_response_debug:
-            code = "G2P-REQ-100"
-            message = exc_split[0]
-        else:
-            code = "G2P-REQ-100"
-            message = "Unknown Error."
+        code = "G2P-REQ-100"
+        message = "Unknown Error."
+        if _config.error_response_debug:
+            message += f" {exc}."
         res = ErrorListResponse(errors=[ErrorResponse(code=code, message=message)])
         return ORJSONResponse(content=res.model_dump(), status_code=500)
 

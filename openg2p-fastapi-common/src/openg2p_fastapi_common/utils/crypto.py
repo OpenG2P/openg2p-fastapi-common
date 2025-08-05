@@ -86,9 +86,9 @@ class KeymanagerCryptoHelper(CryptoHelper):
             final_jwt = f"{part1}.{actual_data}.{part3}"
 
         if km_app_id is None:
-            km_app_id = self.get_verify_app_id(orig_jwt, payload=payload, **kw)
+            km_app_id = await self.get_verify_app_id(orig_jwt, payload=payload, **kw)
         if km_ref_id is None:
-            km_ref_id = self.get_verify_ref_id(payload, **kw)
+            km_ref_id = await self.get_verify_ref_id(payload, **kw)
 
         # Send request to external service for verification
         cookies = {}
@@ -117,7 +117,7 @@ class KeymanagerCryptoHelper(CryptoHelper):
             response.raise_for_status()
             return response.json()["response"]["signatureValid"]
         except Exception as e:
-            _logger.debug("Keymanager JWT Verify API response: %s", response.text)
+            _logger.error("Keymanager JWT Verify API response: %s", response.text)
             _logger.exception("KeymanagerHelper: Error validating JWT")
             raise e
 
@@ -132,9 +132,9 @@ class KeymanagerCryptoHelper(CryptoHelper):
         **kw,
     ) -> str:
         if km_app_id is None:
-            km_app_id = self.get_sign_app_id(payload, **kw)
+            km_app_id = await self.get_sign_app_id(payload, **kw)
         if km_ref_id is None:
-            km_ref_id = self.get_sign_ref_id(payload, **kw)
+            km_ref_id = await self.get_sign_ref_id(payload, **kw)
 
         cookies = {}
         if self.auth_enabled:
@@ -161,7 +161,7 @@ class KeymanagerCryptoHelper(CryptoHelper):
             response.raise_for_status()
             return response.json()["response"]["jwtSignedData"]
         except Exception as e:
-            _logger.debug("Keymanager JWT Sign API response: %s", response.text)
+            _logger.error("Keymanager JWT Sign API response: %s", response.text)
             _logger.exception("KeymanagerHelper: Error creating JWT")
             raise e
 

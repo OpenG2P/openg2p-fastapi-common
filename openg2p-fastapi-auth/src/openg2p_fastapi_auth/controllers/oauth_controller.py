@@ -129,14 +129,16 @@ class OAuthController(BaseController):
             auth_parameters.client_assertion_type == OauthClientAssertionType.private_key_jwt
             or auth_parameters.client_assertion_type == OauthClientAssertionType.private_key_jwt_legacy
         ):
+            iat = datetime.now(tz=timezone.utc).replace(tzinfo=None)
+            exp = iat + timedelta(hours=1)
             client_assertion_type = "urn:ietf:params:oauth:client-assertion-type:jwt-bearer"
             client_assertion = jwt.encode(
                 {
                     "iss": auth_parameters.client_id,
                     "sub": auth_parameters.client_id,
                     "aud": auth_parameters.client_assertion_jwt_aud or auth_parameters.token_endpoint,
-                    "iat": datetime.now(tz=timezone.utc).replace(tzinfo=None),
-                    "exp": datetime.now(tz=timezone.utc).replace(tzinfo=None) + timedelta(hours=1),
+                    "iat": int(iat.timestamp()),
+                    "exp": int(exp.timestamp()),
                 },
                 auth_parameters.client_assertion_jwk,
                 algorithm="RS256",
@@ -160,13 +162,15 @@ class OAuthController(BaseController):
         else:
             km_app_id = app_id_ref_id
             km_ref_id = ""
-        return self.keymanager_helper.create_jwt_token(
+        iat = datetime.now(tz=timezone.utc).replace(tzinfo=None)
+        exp = iat + timedelta(hours=1)
+        return await self.keymanager_helper.create_jwt_token(
             {
                 "iss": auth_parameters.client_id,
                 "sub": auth_parameters.client_id,
                 "aud": auth_parameters.client_assertion_jwt_aud or auth_parameters.token_endpoint,
-                "iat": datetime.now(tz=timezone.utc).replace(tzinfo=None),
-                "exp": datetime.now(tz=timezone.utc).replace(tzinfo=None) + timedelta(hours=1),
+                "iat": int(iat.timestamp()),
+                "exp": int(exp.timestamp()),
             },
             km_app_id=km_app_id,
             km_ref_id=km_ref_id,
