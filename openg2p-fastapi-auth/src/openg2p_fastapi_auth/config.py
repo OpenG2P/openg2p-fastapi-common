@@ -52,8 +52,8 @@ class Settings(BaseSettings):
                 if "type" in lp:
                     lp["type"] = LoginProviderTypes[lp["type"]]
 
-                lp_auth_params = lp.get("authorization_parameters") or {}
-                if code_verifier and lp_auth_params.get("enabled_pkce"):
+                lp_auth_params = lp.get("authorization_parameters")
+                if code_verifier and lp_auth_params:
                     lp_auth_params["code_verifier"] = code_verifier
                 if not lp.get("created_at"):
                     lp["created_at"] = datetime.now(timezone.utc).replace(tzinfo=None)
