@@ -17,6 +17,9 @@ from .models.orm.login_provider import LoginProvider
 
 class Initializer(BaseInitializer):
     def initialize(self, **kwargs):
+        # Call parent initialize first to set up app, logger, db
+        super().initialize(**kwargs)
+        
         # Initialize all Services, Controllers, any utils here.
         AuthController().post_init()
         OAuthController().post_init()
