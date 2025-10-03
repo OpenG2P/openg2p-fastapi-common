@@ -16,6 +16,8 @@ class G2PPaginationRequest(BaseModel):
     current_page: int = Field(..., ge=1)
     page_size: int = Field(..., ge=1)
     sort_by: Optional[str] = None
+    filter_by: Optional[object] = None
+    search_text: Optional[str] = None
 
 
 class G2PRequestHeader(BaseModel):
@@ -27,13 +29,13 @@ class G2PRequestHeader(BaseModel):
 
 
 class G2PRequestBody(BaseModel):
-    g2p_pagination_request: Optional[G2PPaginationRequest] = None
-    g2p_request_payload: Optional[Any] = None
+    pagination_request: Optional[G2PPaginationRequest] = None
+    request_payload: Optional[Any] = None
 
 
 class G2PRequest(BaseModel):
-    g2p_request_header: G2PRequestHeader
-    g2p_request_body: G2PRequestBody
+    request_header: G2PRequestHeader
+    request_body: G2PRequestBody
 
 
 class G2PPaginationResponse(BaseModel):
@@ -50,10 +52,10 @@ class G2PResponseHeader(BaseModel):
 
 
 class G2PResponseBody(BaseModel):
-    g2p_pagination_response: Optional[G2PPaginationResponse] = None
-    g2p_response_payload: Optional[Any] = None
+    pagination_response: Optional[G2PPaginationResponse] = None
+    response_payload: Optional[Any] = None
 
 
 class G2PResponse(BaseModel):
-    g2p_response_header: G2PResponseHeader
-    g2p_response_body: G2PResponseBody
+    response_header: G2PResponseHeader
+    response_body: G2PResponseBody
