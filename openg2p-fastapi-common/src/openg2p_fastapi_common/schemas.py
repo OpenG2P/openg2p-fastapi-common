@@ -16,7 +16,7 @@ class G2PPaginationRequest(BaseModel):
     current_page: int = Field(..., ge=1)
     page_size: int = Field(..., ge=1)
     sort_by: Optional[str] = None
-    filter_by: Optional[object] = None
+    filter_by: Optional[Any] = None
     search_text: Optional[str] = None
 
 
