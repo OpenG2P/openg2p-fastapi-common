@@ -1,3 +1,5 @@
+import enum
+
 import httpx
 from fastapi import Request
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
@@ -13,6 +15,12 @@ from .context import jwks_cache
 from .models.credentials import AuthCredentials
 
 _config = Settings.get_config(strict=False)
+
+
+class UserTypeEnum(enum.Enum):
+    BENEFICIARY = "beneficiary"
+    STAFF = "staff"
+    AGENCY = "agency"
 
 
 class JwtBearerAuth(HTTPBearer):
