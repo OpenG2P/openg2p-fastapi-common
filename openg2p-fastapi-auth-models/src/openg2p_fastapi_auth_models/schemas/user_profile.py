@@ -1,9 +1,16 @@
 from datetime import datetime
+import enum
+from typing import Optional
 
 from pydantic import BaseModel, ConfigDict
 
 
-class BasicProfile(BaseModel):
+class UserType(enum.Enum):
+    BENEFICIARY = "beneficiary"
+    STAFF = "staff"
+    AGENCY = "agency"
+
+class UserProfile(BaseModel):
     model_config = ConfigDict(extra="allow")
 
     name: str | None = None
@@ -16,3 +23,4 @@ class BasicProfile(BaseModel):
     gender: str | None = None
     birthdate: str | None = None
     address: dict | None = None
+    user_type: Optional[str] = None

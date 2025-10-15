@@ -7,7 +7,3 @@
 [![PyPI - Downloads](https://img.shields.io/pypi/dm/openg2p-fastapi-auth)](https://pypi.org/project/openg2p-fastapi-auth)
 
 This package contains components required to bootstrap the authn & authz aspects for APIs defined.
-
-## Usage
-
-TBD

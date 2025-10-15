@@ -1,26 +1,20 @@
-import enum
-
 import httpx
+from typing import Any, Dict, Optional
 from fastapi import Request
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from jose import jwt
+from openg2p_fastapi_auth_models.schemas import AuthCredentials
 from openg2p_fastapi_common.errors.http_exceptions import (
     ForbiddenError,
     InternalServerError,
     UnauthorizedError,
 )
+from openg2p_fastapi_auth_models.models import LoginProvider
 
 from .config import Settings
 from .context import jwks_cache
-from .models.credentials import AuthCredentials
 
 _config = Settings.get_config(strict=False)
-
-
-class UserTypeEnum(enum.Enum):
-    BENEFICIARY = "beneficiary"
-    STAFF = "staff"
-    AGENCY = "agency"
 
 
 class JwtBearerAuth(HTTPBearer):
@@ -34,7 +28,7 @@ class JwtBearerAuth(HTTPBearer):
         api_auth_settings = config_dict.get("auth_api_" + api_call_name, {})
 
         if (not api_auth_settings) or (not api_auth_settings.get("enabled", None)):
-            return None
+            print("Auth not enabled for this API call:", api_call_name)
 
         issuers_list = api_auth_settings.get("issuers", None) or config_dict.get("auth_default_issuers", [])
         audiences_list = api_auth_settings.get("audiences", None) or config_dict.get(
@@ -59,7 +53,7 @@ class JwtBearerAuth(HTTPBearer):
         iss = unverified_payload.get("iss", None)
         aud = unverified_payload.get("aud", None)
         if (not iss) or (iss not in issuers_list):
-            raise UnauthorizedError(message="Unauthorized. Unknown Issuer.")
+            raise UnauthorizedError(message=f"Unauthorized. Unknown Issuer. {iss}")
 
         if audiences_list:
             if (

@@ -11,6 +11,7 @@ class AuthCredentials(HTTPAuthorizationCredentials):
     credentials: str
     iss: str = None
     sub: str = None
+    user_type: str | None = None
     aud: str | list | None = None
     iat: datetime | None = None
     exp: datetime | None = None
