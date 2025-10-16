@@ -20,7 +20,7 @@ class LoginProvider(BaseORMModelWithTimes):
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     name: Mapped[str] = mapped_column(String)
-    flow: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+    type: Mapped[Optional[str]] = mapped_column(String, nullable=True)
     body: Mapped[Optional[str]] = mapped_column(String, nullable=True)
     image_icon_url: Mapped[Optional[str]] = mapped_column(String, nullable=True)
     client_id: Mapped[Optional[str]] = mapped_column(String, nullable=True)
@@ -40,7 +40,7 @@ class LoginProvider(BaseORMModelWithTimes):
     date_format: Mapped[Optional[str]] = mapped_column(String, nullable=True)
     token_map: Mapped[str] = mapped_column(String)
     extra_authorize_params: Mapped[Optional[str]] = mapped_column(String, nullable=True)
-    g2p_portal_oauth_callback_url: Mapped[Optional[str]] = mapped_column(
+    oauth_callback_url: Mapped[Optional[str]] = mapped_column(
         String, nullable=True
     )
     g2p_id_type: Mapped[Optional[str]] = mapped_column(String, nullable=True)

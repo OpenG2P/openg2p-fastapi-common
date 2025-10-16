@@ -37,7 +37,7 @@ class OauthProviderParameters(BaseModel):
     client_assertion_jwk_keymanager: str | None = None
 
     response_type: str = "code"
-    g2p_portal_oauth_callback_url: str
+    oauth_callback_url: str
     scope: str = "openid profile email"
     enable_pkce: bool = True
     code_verifier: str = ""
