@@ -1,3 +1,3 @@
-from .beneficiary_keycloak import BeneficiaryKeycloakAuth
 from .beneficiary_esignet import BeneficiaryEsignetAuth
+from .beneficiary_keycloak import BeneficiaryKeycloakAuth
 from .staff_keycloak import StaffKeycloakAuth

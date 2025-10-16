@@ -1,7 +1,7 @@
 from .factory import AuthFactory
-from .interface import AuthInterface
 from .implementations import (
-    BeneficiaryKeycloakAuth,
     BeneficiaryEsignetAuth,
+    BeneficiaryKeycloakAuth,
     StaffKeycloakAuth,
 )
+from .interface import AuthInterface

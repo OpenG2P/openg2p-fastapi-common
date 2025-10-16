@@ -1,5 +1,4 @@
 import httpx
-from typing import Any, Dict, Optional
 from fastapi import Request
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from jose import jwt
@@ -9,7 +8,6 @@ from openg2p_fastapi_common.errors.http_exceptions import (
     InternalServerError,
     UnauthorizedError,
 )
-from openg2p_fastapi_auth_models.models import LoginProvider
 
 from .config import Settings
 from .context import jwks_cache

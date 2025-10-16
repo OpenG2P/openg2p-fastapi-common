@@ -5,14 +5,14 @@ if sys.version_info >= (3, 11):
 else:
     from typing_extensions import Self
 
-from typing import Optional, Dict, Any
+from typing import Any, Dict, Optional
+
 from openg2p_fastapi_common.models import BaseORMModelWithTimes
-from sqlalchemy import JSON, String, Integer, LargeBinary, Boolean
-from sqlalchemy import Enum as SaEnum
+from sqlalchemy import Boolean, Integer, LargeBinary, String
 from sqlalchemy.orm import Mapped, mapped_column
 
-from ..schemas import LoginProviderTypes
 from ..context import auth_id_type_config_cache
+from ..schemas import LoginProviderTypes
 
 
 class LoginProvider(BaseORMModelWithTimes):
@@ -26,9 +26,7 @@ class LoginProvider(BaseORMModelWithTimes):
     client_id: Mapped[Optional[str]] = mapped_column(String, nullable=True)
     client_authentication_method: Mapped[str] = mapped_column(String)
     client_secret: Mapped[Optional[str]] = mapped_column(String, nullable=True)
-    client_private_key: Mapped[Optional[bytes]] = mapped_column(
-        LargeBinary(), nullable=True
-    )
+    client_private_key: Mapped[Optional[bytes]] = mapped_column(LargeBinary(), nullable=True)
     auth_endpoint: Mapped[str] = mapped_column(String)
     validation_endpoint: Mapped[Optional[str]] = mapped_column(String, nullable=True)
     token_endpoint: Mapped[Optional[str]] = mapped_column(String, nullable=True)
@@ -40,11 +38,9 @@ class LoginProvider(BaseORMModelWithTimes):
     date_format: Mapped[Optional[str]] = mapped_column(String, nullable=True)
     token_map: Mapped[str] = mapped_column(String)
     extra_authorize_params: Mapped[Optional[str]] = mapped_column(String, nullable=True)
-    oauth_callback_url: Mapped[Optional[str]] = mapped_column(
-        String, nullable=True
-    )
+    oauth_callback_url: Mapped[Optional[str]] = mapped_column(String, nullable=True)
     g2p_id_type: Mapped[Optional[str]] = mapped_column(String, nullable=True)
-    
+
     @classmethod
     async def get_login_provider_from_iss(cls, iss: str) -> Self:
         # TODO: Modify the following to a direct database query
@@ -57,15 +53,11 @@ class LoginProvider(BaseORMModelWithTimes):
             else:
                 raise NotImplementedError()
         return None
-    
+
     @classmethod
-    async def get_auth_id_type_config(
-        cls, id: int = None, iss: str = None
-    ) -> Optional[Dict[str, Any]]:
+    async def get_auth_id_type_config(cls, id: int = None, iss: str = None) -> Optional[Dict[str, Any]]:
         iss_id = id if id else iss
-        id_type_config: Optional[Dict[str, Any]] = auth_id_type_config_cache.get().get(
-            iss_id, None
-        )
+        id_type_config: Optional[Dict[str, Any]] = auth_id_type_config_cache.get().get(iss_id, None)
         if not id_type_config:
             login_provider: Optional[LoginProvider] = None
             if id:
@@ -82,7 +74,7 @@ class LoginProvider(BaseORMModelWithTimes):
                 }
                 auth_id_type_config_cache.get()[iss_id] = id_type_config
         return id_type_config
-    
+
     @classmethod
     def map_validation_response(cls, req: dict, mapping: str = None) -> Dict[str, Any]:
         res: Dict[str, Any] = {}
