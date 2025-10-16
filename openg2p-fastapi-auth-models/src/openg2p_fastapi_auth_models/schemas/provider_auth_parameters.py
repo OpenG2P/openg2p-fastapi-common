@@ -24,10 +24,10 @@ class OauthClientAssertionType(enum.Enum):
 
 
 class OauthProviderParameters(BaseModel):
-    authorize_endpoint: str
+    auth_endpoint: str
     token_endpoint: str
-    validate_endpoint: str
-    jwks_endpoint: str
+    validation_endpoint: str
+    jwks_uri: str
 
     client_id: str
     client_secret: str | None = None
@@ -37,13 +37,13 @@ class OauthProviderParameters(BaseModel):
     client_assertion_jwk_keymanager: str | None = None
 
     response_type: str = "code"
-    redirect_uri: str
+    oauth_callback_url: str
     scope: str = "openid profile email"
     enable_pkce: bool = True
     code_verifier: str = ""
     code_challenge: str = ""
     code_challenge_method: str = "S256"
-    extra_authorize_parameters: dict = {}
+    extra_authorize_params: dict = {}
 
     @field_validator("enable_pkce", mode="before")
     @classmethod

@@ -1,3 +1,4 @@
 pytest-cov
 psycopg2
 asyncpg
+-e openg2p-fastapi-auth-models

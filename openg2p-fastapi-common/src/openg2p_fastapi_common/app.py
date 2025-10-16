@@ -36,8 +36,10 @@ class Initializer(BaseComponent):
         BaseExceptionHandler()
 
     def init_logger(self):
-        json_logging.init_fastapi(enable_json=True)
-        json_logging.JSON_SERIALIZER = lambda log: orjson.dumps(log).decode("utf-8")
+        # Only initialize json_logging if it hasn't been initialized already
+        if json_logging._current_framework is None:
+            json_logging.init_fastapi(enable_json=True)
+            json_logging.JSON_SERIALIZER = lambda log: orjson.dumps(log).decode("utf-8")
         _logger.setLevel(getattr(logging, _config.logging_level))
         _logger.addHandler(logging.StreamHandler(sys.stdout))
         if _config.logging_file_name:
