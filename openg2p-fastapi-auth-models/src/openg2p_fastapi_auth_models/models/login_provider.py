@@ -57,6 +57,9 @@ class LoginProvider(BaseORMModelWithTimes):
     @classmethod
     async def get_auth_id_type_config(cls, id: int = None, iss: str = None) -> Optional[Dict[str, Any]]:
         iss_id = id if id else iss
+        if auth_id_type_config_cache.get() is None:
+            auth_id_type_config_cache.set({})
+
         id_type_config: Optional[Dict[str, Any]] = auth_id_type_config_cache.get().get(iss_id, None)
         if not id_type_config:
             login_provider: Optional[LoginProvider] = None
