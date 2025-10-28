@@ -5,4 +5,3 @@
 [![codecov](https://codecov.io/gh/OpenG2P/openg2p-fastapi-common/branch/1.1/graph/badge.svg)](https://codecov.io/gh/OpenG2P/openg2p-fastapi-common)
 [![PyPI](https://img.shields.io/pypi/v/openg2p-fastapi-auth?label=pypi%20package)](https://pypi.org/project/openg2p-fastapi-auth)
 [![PyPI - Downloads](https://img.shields.io/pypi/dm/openg2p-fastapi-auth)](https://pypi.org/project/openg2p-fastapi-auth)
-

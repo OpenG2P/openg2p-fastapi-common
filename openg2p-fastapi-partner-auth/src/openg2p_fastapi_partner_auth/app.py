@@ -10,4 +10,3 @@ from openg2p_fastapi_common.app import Initializer as BaseInitializer
 class Initializer(BaseInitializer):
     def initialize(self, **kwargs):
         super().initialize()
-
