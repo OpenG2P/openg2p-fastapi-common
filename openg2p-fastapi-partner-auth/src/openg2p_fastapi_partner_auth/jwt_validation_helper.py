@@ -16,7 +16,7 @@ class JWTValidationHelper(BaseService):
         return await self.crypto_helper.verify_jwt(
             orig_jwt,
             payload=payload,
-            km_app_id=_config.jwt_validate_keymanager_app_id,
+            km_app_id=_config.keymanager_sign_app_id,
             km_ref_id=self.get_partner_id_from_payload(payload),
             **kw,
         )
