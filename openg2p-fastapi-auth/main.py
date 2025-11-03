@@ -1,5 +1,7 @@
 """Main entry point for the openg2p-fastapi-auth application"""
+
 import os
+
 from openg2p_fastapi_auth.app import Initializer
 
 # Set environment variables to disable database connection for testing
@@ -18,4 +20,3 @@ app = initializer.return_app()
 if __name__ == "__main__":
     # This allows running with: python main.py
     initializer.main()
-
