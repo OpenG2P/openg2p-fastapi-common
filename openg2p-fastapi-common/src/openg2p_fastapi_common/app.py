@@ -1,4 +1,5 @@
 """Module containing initialization instructions and FastAPI app"""
+
 import argparse
 import logging
 import sys
@@ -35,8 +36,10 @@ class Initializer(BaseComponent):
         BaseExceptionHandler()
 
     def init_logger(self):
-        json_logging.init_fastapi(enable_json=True)
-        json_logging.JSON_SERIALIZER = lambda log: orjson.dumps(log).decode("utf-8")
+        # Only initialize json_logging if it hasn't been initialized already
+        if json_logging._current_framework is None:
+            json_logging.init_fastapi(enable_json=True)
+            json_logging.JSON_SERIALIZER = lambda log: orjson.dumps(log).decode("utf-8")
         _logger.setLevel(getattr(logging, _config.logging_level))
         _logger.addHandler(logging.StreamHandler(sys.stdout))
         if _config.logging_file_name:
@@ -46,9 +49,7 @@ class Initializer(BaseComponent):
 
     def init_db(self):
         if _config.db_datasource:
-            db_engine = create_async_engine(
-                _config.db_datasource, echo=_config.db_logging
-            )
+            db_engine = create_async_engine(_config.db_datasource, echo=_config.db_logging)
             dbengine.set(db_engine)
 
     def init_app(self):
@@ -84,16 +85,10 @@ class Initializer(BaseComponent):
         subparsers = parser.add_subparsers(help="List Commands.", required=True)
         run_subparser = subparsers.add_parser("run", help="Run API Server.")
         run_subparser.set_defaults(func=self.run_server)
-        migrate_subparser = subparsers.add_parser(
-            "migrate", help="Create/Migrate Database Tables."
-        )
+        migrate_subparser = subparsers.add_parser("migrate", help="Create/Migrate Database Tables.")
         migrate_subparser.set_defaults(func=self.migrate_database)
-        openapi_subparser = subparsers.add_parser(
-            "getOpenAPI", help="Get OpenAPI Json of the Server."
-        )
-        openapi_subparser.add_argument(
-            "filepath", help="Path of the Output OpenAPI Json File."
-        )
+        openapi_subparser = subparsers.add_parser("getOpenAPI", help="Get OpenAPI Json of the Server.")
+        openapi_subparser.add_argument("filepath", help="Path of the Output OpenAPI Json File.")
         openapi_subparser.set_defaults(func=self.get_openapi)
         args = parser.parse_args()
         args.func(args)
@@ -146,10 +141,11 @@ class Initializer(BaseComponent):
 
     @asynccontextmanager
     async def fastapi_app_lifespan(self, app: FastAPI):
-        for initializer in component_registry.get():
+        cr = component_registry.get() or []
+        for initializer in cr:
             if isinstance(initializer, Initializer):
                 await initializer.fastapi_app_startup(app)
         yield
-        for initializer in component_registry.get():
+        for initializer in cr:
             if isinstance(initializer, Initializer):
                 await initializer.fastapi_app_shutdown(app)

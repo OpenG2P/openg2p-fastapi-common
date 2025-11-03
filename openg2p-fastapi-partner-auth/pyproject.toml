@@ -3,11 +3,11 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
-name = "openg2p-fastapi-auth"
+name = "openg2p-fastapi-partner-auth"
 authors = [
     { name="OpenG2P", email="info@openg2p.org" },
 ]
-description = "OpenG2P Library for initializing authn and authz for defined APIs"
+description = "OpenG2P FastAPI Library for Partner Auth"
 readme = "README.md"
 requires-python = ">=3.7"
 classifiers = [
@@ -17,7 +17,6 @@ classifiers = [
 ]
 dependencies = [
     "openg2p-fastapi-common",
-    "openg2p-fastapi-auth-models",
     "cryptography >=41.0.4",
     "python-jose >=3.3.0",
 ]
@@ -29,4 +28,4 @@ Documentation = "https://docs.openg2p.org/"
 Repository = "https://github.com/openg2p/openg2p-fastapi-common"
 
 [tool.hatch.version]
-path = "src/openg2p_fastapi_auth/__init__.py"
+path = "src/openg2p_fastapi_partner_auth/__init__.py"

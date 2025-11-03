@@ -1,5 +1,3 @@
-from typing import List
-
 from pydantic import BaseModel
 
 
@@ -9,4 +7,4 @@ class ErrorResponse(BaseModel):
 
 
 class ErrorListResponse(BaseModel):
-    errors: List[ErrorResponse]
+    errors: list[ErrorResponse]

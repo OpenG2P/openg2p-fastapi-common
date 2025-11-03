@@ -1,9 +1,8 @@
-from typing import Optional
-
 import httpx
 from fastapi import Request
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from jose import jwt
+from openg2p_fastapi_auth_models.schemas import AuthCredentials
 from openg2p_fastapi_common.errors.http_exceptions import (
     ForbiddenError,
     InternalServerError,
@@ -12,15 +11,12 @@ from openg2p_fastapi_common.errors.http_exceptions import (
 
 from .config import Settings
 from .context import jwks_cache
-from .models.credentials import AuthCredentials
 
 _config = Settings.get_config(strict=False)
 
 
 class JwtBearerAuth(HTTPBearer):
-    async def __call__(
-        self, request: Request
-    ) -> Optional[HTTPAuthorizationCredentials]:
+    async def __call__(self, request: Request) -> HTTPAuthorizationCredentials | None:
         config_dict = _config.model_dump()
         if not config_dict.get("auth_enabled", None):
             return None
@@ -30,11 +26,9 @@ class JwtBearerAuth(HTTPBearer):
         api_auth_settings = config_dict.get("auth_api_" + api_call_name, {})
 
         if (not api_auth_settings) or (not api_auth_settings.get("enabled", None)):
-            return None
+            print("Auth not enabled for this API call:", api_call_name)
 
-        issuers_list = api_auth_settings.get("issuers", None) or config_dict.get(
-            "auth_default_issuers", []
-        )
+        issuers_list = api_auth_settings.get("issuers", None) or config_dict.get("auth_default_issuers", [])
         audiences_list = api_auth_settings.get("audiences", None) or config_dict.get(
             "auth_default_audiences", []
         )
@@ -42,9 +36,7 @@ class JwtBearerAuth(HTTPBearer):
             "auth_default_jwks_urls", []
         )
 
-        jwt_token = request.headers.get("Authorization", None) or request.cookies.get(
-            "X-Access-Token", None
-        )
+        jwt_token = request.headers.get("Authorization", None) or request.cookies.get("X-Access-Token", None)
         jwt_id_token = request.cookies.get("X-ID-Token", None)
         if jwt_token:
             jwt_token = jwt_token.removeprefix("Bearer ")
@@ -55,26 +47,25 @@ class JwtBearerAuth(HTTPBearer):
         try:
             unverified_payload = jwt.get_unverified_claims(jwt_token)
         except Exception as e:
-            raise UnauthorizedError(
-                message=f"Unauthorized. Jwt expired. {repr(e)}"
-            ) from e
+            raise UnauthorizedError(message=f"Unauthorized. Jwt expired. {repr(e)}") from e
         iss = unverified_payload.get("iss", None)
         aud = unverified_payload.get("aud", None)
         if (not iss) or (iss not in issuers_list):
-            raise UnauthorizedError(message="Unauthorized. Unknown Issuer.")
+            raise UnauthorizedError(message=f"Unauthorized. Unknown Issuer. {iss}")
 
         if audiences_list:
             if (
                 (not aud)
-                or (
-                    isinstance(aud, list)
-                    and not (set(audiences_list).issubset(set(aud)))
-                )
+                or (isinstance(aud, list) and not (set(audiences_list).issubset(set(aud))))
                 or (isinstance(aud, str) and aud not in audiences_list)
             ):
                 raise UnauthorizedError(message="Unauthorized. Unknown Audience.")
 
-        jwks = jwks_cache.get().get(iss, None)
+        jc = jwks_cache.get()
+        if not jc:
+            jc = {}
+            jwks_cache.set(jc)
+        jwks = jc.get(iss, None)
 
         if not jwks:
             try:
@@ -88,7 +79,7 @@ class JwtBearerAuth(HTTPBearer):
                 res = httpx.get(jwks_url)
                 res.raise_for_status()
                 jwks = res.json()
-                jwks_cache.get()[iss] = jwks
+                jc[iss] = jwks
             except Exception as e:
                 raise InternalServerError(
                     code="G2P-AUT-500",
@@ -106,9 +97,7 @@ class JwtBearerAuth(HTTPBearer):
                 },
             )
         except Exception as e:
-            raise UnauthorizedError(
-                message=f"Unauthorized. Invalid Jwt. {repr(e)}"
-            ) from e
+            raise UnauthorizedError(message=f"Unauthorized. Invalid Jwt. {repr(e)}") from e
 
         if jwt_id_token:
             try:
@@ -128,9 +117,7 @@ class JwtBearerAuth(HTTPBearer):
                 )
                 unverified_payload = self.combine_tokens(unverified_payload, res)
             except Exception as e:
-                raise UnauthorizedError(
-                    message=f"Unauthorized. Invalid Jwt ID Token. {repr(e)}"
-                ) from e
+                raise UnauthorizedError(message=f"Unauthorized. Invalid Jwt ID Token. {repr(e)}") from e
 
         claim_to_check = api_auth_settings.get("claim_name", None)
         claim_values = api_auth_settings.get("claim_values", None)
@@ -168,11 +155,7 @@ class JwtBearerAuth(HTTPBearer):
         for token in tokens:
             if token:
                 try:
-                    res.append(
-                        jwt.get_unverified_claims(token)
-                        if isinstance(token, str)
-                        else token
-                    )
+                    res.append(jwt.get_unverified_claims(token) if isinstance(token, str) else token)
                 except Exception:
                     # This means one of the token being combined is not JWT or dict.
                     # Ignore such tokens

@@ -38,12 +38,15 @@ repos:
         - --py3-plus
         - --keep-runtime-typing
   - repo: https://github.com/psf/black
-    rev: 23.9.1
+    rev: 25.1.0
     hooks:
       - id: black
-  - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.0.289
-    hooks:
-      - id: ruff
         args:
-          - --fix
+        - --line-length=110
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.12.7
+    hooks:
+      - id: ruff-check
+        args:
+        - --fix
+      - id: ruff-format
