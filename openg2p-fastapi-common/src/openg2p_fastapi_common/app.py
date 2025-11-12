@@ -9,6 +9,7 @@ import json_logging
 import orjson
 import uvicorn
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.ext.asyncio import create_async_engine
 
 from .component import BaseComponent
@@ -67,6 +68,13 @@ class Initializer(BaseComponent):
             },
             lifespan=self.fastapi_app_lifespan,
             root_path=_config.openapi_root_path if _config.openapi_root_path else "",
+        )
+        app.add_middleware(
+            CORSMiddleware,
+            allow_origins=_config.cors_allow_origins,
+            allow_credentials=_config.cors_allow_credentials,
+            allow_methods=["*"],
+            allow_headers=["*"],
         )
         json_logging.init_request_instrument(app)
         app_registry.set(app)
