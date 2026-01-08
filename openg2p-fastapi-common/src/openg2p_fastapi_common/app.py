@@ -141,7 +141,7 @@ class Initializer(BaseComponent):
 
     @asynccontextmanager
     async def fastapi_app_lifespan(self, app: FastAPI):
-        cr = component_registry.get() or []
+        cr = component_registry
         for initializer in cr:
             if isinstance(initializer, Initializer):
                 await initializer.fastapi_app_startup(app)
