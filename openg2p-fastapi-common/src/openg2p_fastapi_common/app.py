@@ -107,21 +107,21 @@ class Initializer(BaseComponent):
             import subprocess
 
             subprocess.run(
-                f'gunicorn "main:app" --workers {_config.no_of_workers} --worker-class uvicorn.workers.UvicornWorker --bind {_config.host}:{_config.port}',
+                f'gunicorn "main:app" --workers {_config.no_of_workers} --worker-class uvicorn.workers.UvicornWorker --bind {_config.app_host}:{_config.app_port}',
                 shell=True,
             )
         if _config.worker_type == WorkerType.uvicorn:
             import subprocess
 
             subprocess.run(
-                f'uvicorn "main:app" --workers {_config.no_of_workers} --host {_config.host} --port {_config.port}',
+                f'uvicorn "main:app" --workers {_config.no_of_workers} --host {_config.app_host} --port {_config.app_port}',
                 shell=True,
             )
         if _config.worker_type == WorkerType.local:
             uvicorn.run(
                 app,
-                host=_config.host,
-                port=_config.port,
+                host=_config.app_host,
+                port=_config.app_port,
                 access_log=False,
                 # The following is not possible
                 # workers=_config.no_of_workers

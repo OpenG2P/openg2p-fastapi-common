@@ -30,8 +30,8 @@ class Settings(BaseSettings):
         env_prefix="common_", env_file=".env", extra="allow", env_nested_delimiter="__"
     )
 
-    host: str = "0.0.0.0"
-    port: int = 8000
+    app_host: str = "0.0.0.0"
+    app_port: int = 8000
 
     no_of_workers: int = 1
     worker_id: int = -1
