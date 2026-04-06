@@ -1,16 +1,18 @@
 """Module initializing configs"""
 
+import json
 import os
 import sys
 from enum import Enum
 from pathlib import Path
+from typing import List
 
 if sys.version_info >= (3, 11):
     from typing import Self
 else:
     from typing_extensions import Self
 
-from pydantic import model_validator
+from pydantic import field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 from . import __version__
@@ -28,8 +30,8 @@ class Settings(BaseSettings):
         env_prefix="common_", env_file=".env", extra="allow", env_nested_delimiter="__"
     )
 
-    host: str = "0.0.0.0"
-    port: int = 8000
+    app_host: str = "0.0.0.0"
+    app_port: int = 8000
 
     no_of_workers: int = 1
     worker_id: int = -1
@@ -81,6 +83,20 @@ class Settings(BaseSettings):
     keymanager_auth_client_secret: str = ""
     keymanager_sign_app_id: str = "OPENG2P"
     keymanager_sign_ref_id: str = ""
+
+    cors_allow_origins: List[str] = []
+    cors_allow_credentials: bool = True
+    security_headers_enabled: bool = True
+
+    @field_validator("cors_allow_origins", mode="before")
+    def parse_cors_allow_origins(cls, v):
+        """Support JSON-style list and comma-separated values in env."""
+        if isinstance(v, str):
+            try:
+                return json.loads(v)
+            except json.JSONDecodeError:
+                return [x.strip() for x in v.split(",") if x.strip()]
+        return v
 
     @model_validator(mode="after")
     def validate_db_datasource(self) -> Self:

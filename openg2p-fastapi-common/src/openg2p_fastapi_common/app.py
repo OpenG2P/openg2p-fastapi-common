@@ -9,12 +9,14 @@ import json_logging
 import orjson
 import uvicorn
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.ext.asyncio import create_async_engine
 
 from .component import BaseComponent
 from .config import Settings, WorkerType
 from .context import app_registry, component_registry, dbengine
 from .exception import BaseExceptionHandler
+from .middleware import SecurityHeadersMiddleware
 
 _config = Settings.get_config(strict=False)
 _logger = logging.getLogger(_config.logging_default_logger_name)
@@ -68,6 +70,15 @@ class Initializer(BaseComponent):
             lifespan=self.fastapi_app_lifespan,
             root_path=_config.openapi_root_path if _config.openapi_root_path else "",
         )
+        app.add_middleware(
+            CORSMiddleware,
+            allow_origins=_config.cors_allow_origins,
+            allow_credentials=_config.cors_allow_credentials,
+            allow_methods=["*"],
+            allow_headers=["*"],
+        )
+        if _config.security_headers_enabled:
+            app.add_middleware(SecurityHeadersMiddleware)
         json_logging.init_request_instrument(app)
         app_registry.set(app)
         _logger.info(
@@ -99,21 +110,21 @@ class Initializer(BaseComponent):
             import subprocess
 
             subprocess.run(
-                f'gunicorn "main:app" --workers {_config.no_of_workers} --worker-class uvicorn.workers.UvicornWorker --bind {_config.host}:{_config.port}',
+                f'gunicorn "main:app" --workers {_config.no_of_workers} --worker-class uvicorn.workers.UvicornWorker --bind {_config.app_host}:{_config.app_port}',
                 shell=True,
             )
         if _config.worker_type == WorkerType.uvicorn:
             import subprocess
 
             subprocess.run(
-                f'uvicorn "main:app" --workers {_config.no_of_workers} --host {_config.host} --port {_config.port}',
+                f'uvicorn "main:app" --workers {_config.no_of_workers} --host {_config.app_host} --port {_config.app_port}',
                 shell=True,
             )
         if _config.worker_type == WorkerType.local:
             uvicorn.run(
                 app,
-                host=_config.host,
-                port=_config.port,
+                host=_config.app_host,
+                port=_config.app_port,
                 access_log=False,
                 # The following is not possible
                 # workers=_config.no_of_workers
@@ -141,7 +152,7 @@ class Initializer(BaseComponent):
 
     @asynccontextmanager
     async def fastapi_app_lifespan(self, app: FastAPI):
-        cr = component_registry.get() or []
+        cr = component_registry
         for initializer in cr:
             if isinstance(initializer, Initializer):
                 await initializer.fastapi_app_startup(app)

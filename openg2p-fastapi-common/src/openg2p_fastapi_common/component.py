@@ -16,16 +16,11 @@ from .context import component_registry
 class BaseComponent:
     def __init__(self, name=""):
         self.name = name
-        cr = component_registry.get()
-        if not cr:
-            cr = []
-            component_registry.set(cr)
-        cr.append(self)
+        component_registry.append(self)
 
     @classmethod
     def get_component(cls, name="", strict=False) -> Self:
-        cr = component_registry.get() or []
-        for component in cr:
+        for component in component_registry:
             result = None
             if strict:
                 if cls is type(component):

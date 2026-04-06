@@ -48,7 +48,7 @@ class LoginProvider(BaseORMModelWithTimes):
         providers = await cls.get_all()
         for lp in providers:
             if lp.type == LoginProviderTypes.oauth2_auth_code:
-                if iss in lp.authorization_parameters.get("token_endpoint", ""):
+                if iss in (lp.token_endpoint or ""):
                     return lp
             else:
                 raise NotImplementedError()
