@@ -86,6 +86,7 @@ class Settings(BaseSettings):
 
     cors_allow_origins: List[str] = []
     cors_allow_credentials: bool = True
+    security_headers_enabled: bool = True
 
     @field_validator("cors_allow_origins", mode="before")
     def parse_cors_allow_origins(cls, v):
