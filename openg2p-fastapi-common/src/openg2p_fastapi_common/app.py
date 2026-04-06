@@ -16,6 +16,7 @@ from .component import BaseComponent
 from .config import Settings, WorkerType
 from .context import app_registry, component_registry, dbengine
 from .exception import BaseExceptionHandler
+from .middleware import SecurityHeadersMiddleware
 
 _config = Settings.get_config(strict=False)
 _logger = logging.getLogger(_config.logging_default_logger_name)
@@ -76,6 +77,8 @@ class Initializer(BaseComponent):
             allow_methods=["*"],
             allow_headers=["*"],
         )
+        if _config.security_headers_enabled:
+            app.add_middleware(SecurityHeadersMiddleware)
         json_logging.init_request_instrument(app)
         app_registry.set(app)
         _logger.info(
