@@ -84,6 +84,28 @@ class Settings(BaseSettings):
     keymanager_sign_app_id: str = "OPENG2P"
     keymanager_sign_ref_id: str = ""
 
+    # JWS sign/verify backend selector — DISTINCT from the keymanager_* settings
+    # above, which are left untouched.
+    #   "keymanager" (default) -> KeymanagerCryptoHelper (remote Keymanager service).
+    #   "local"                -> PyJWTCryptoHelper (in-process PyJWT; no Keymanager).
+    crypto_backend: str = "keymanager"
+    # --- "local" backend settings (ignored when crypto_backend="keymanager") ---
+    # Outbound signing: a password-protected PKCS#12 (.p12) keystore holding this
+    # service's own private key. Empty when the service only verifies.
+    crypto_signing_key_path: str = ""
+    crypto_signing_key_password: str = ""
+    # Optional kid; blank -> the signing certificate's SHA-256 thumbprint is used.
+    crypto_signing_key_kid: str = ""
+    crypto_signing_algorithm: str = "RS256"
+    # Comma-separated allowed JWS algorithms for verification. RS256 only
+    # (asymmetric); "none" and HMAC (HS*) are always rejected regardless.
+    crypto_allowed_algorithms: str = "RS256"
+    # Seed-based partner onboarding: a JSON list of partner public certs upserted
+    # into the partner_keys table at migrate-time. Each item:
+    #   {"reference_id": "PARTNER_<MNEMONIC>", "public_key": "<PEM cert>",
+    #    "kid": "<optional>", "algorithm": "RS256"}
+    crypto_partner_certs: list[dict] = []
+
     cors_allow_origins: List[str] = []
     cors_allow_credentials: bool = True
     security_headers_enabled: bool = True

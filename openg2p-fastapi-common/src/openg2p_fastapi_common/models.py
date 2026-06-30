@@ -2,13 +2,14 @@
 
 import sys
 from datetime import datetime, timezone
+from typing import Optional
 
 if sys.version_info >= (3, 11):
     from typing import Self
 else:
     from typing_extensions import Self
 
-from sqlalchemy import DateTime, inspect, select
+from sqlalchemy import Boolean, DateTime, String, inspect, select
 from sqlalchemy.ext.asyncio import async_sessionmaker
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
@@ -84,3 +85,36 @@ class BaseORMModelWithTimes(BaseORMModelWithId):
     updated_at: Mapped[datetime | None] = mapped_column(
         DateTime(), default=lambda: datetime.now(tz=timezone.utc).replace(tzinfo=None)
     )
+
+
+class PartnerKey(BaseORMModelWithTimes):
+    """Partner public-key registry for the "local" JWS verify backend.
+
+    Each row holds one partner's X.509 certificate (PEM), keyed by ``reference_id``
+    (``PARTNER_<MNEMONIC>`` — the value ``JWTValidationHelper`` derives from
+    ``sender_app_mnemonic``). Public certs are not secret, so they live in this
+    table rather than a Secret. Multiple ``active`` rows per partner make rotation
+    an overlap operation. Onboarding is seed-based (``crypto_partner_certs``); a
+    runtime admin API is a planned follow-up (TODO).
+
+    Only used when ``crypto_backend="local"``; the keymanager backend never creates
+    or reads this table (the service calls ``create_migrate`` only when local).
+    """
+
+    __tablename__ = "partner_keys"
+
+    # The base declares a NOT NULL ``active`` with no default; give it one so
+    # seed-inserted rows need not set it explicitly.
+    active: Mapped[bool] = mapped_column(Boolean(), default=True)
+    # PARTNER_<MNEMONIC>, e.g. PARTNER_G2P_BRIDGE. Looked up on every inbound verify.
+    reference_id: Mapped[str] = mapped_column(String, index=True)
+    # X.509 certificate in PEM (preferred) or a bare public-key PEM.
+    public_key: Mapped[str] = mapped_column(String)
+    # Optional JWS 'kid' the partner stamps in the protected header (informational;
+    # verification keys off reference_id, kid only narrows candidates).
+    kid: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+    algorithm: Mapped[str] = mapped_column(String, default="RS256")
+    # 'active' | 'revoked'. Only 'active' rows are considered at verify time.
+    status: Mapped[str] = mapped_column(String, default="active")
+    valid_from: Mapped[Optional[datetime]] = mapped_column(DateTime(), nullable=True)
+    valid_to: Mapped[Optional[datetime]] = mapped_column(DateTime(), nullable=True)
