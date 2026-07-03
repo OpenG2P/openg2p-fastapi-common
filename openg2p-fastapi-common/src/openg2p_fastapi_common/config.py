@@ -87,7 +87,11 @@ class Settings(BaseSettings):
     # JWS sign/verify backend selector — DISTINCT from the keymanager_* settings
     # above, which are left untouched.
     #   "keymanager" (default) -> KeymanagerCryptoHelper (remote Keymanager service).
-    #   "local"                -> PyJWTCryptoHelper (in-process PyJWT; no Keymanager).
+    #   "local"                -> PyJWTCryptoHelper reading a locally-seeded
+    #                             partner_keys table (PartnerKeyStore).
+    #   "partner-mgmt"         -> PyJWTCryptoHelper fetching partner keys from the
+    #                             Partner Management service (PartnerMgmtKeyStore),
+    #                             cached in-process. No local seeding needed.
     crypto_backend: str = "keymanager"
     # --- "local" backend settings (ignored when crypto_backend="keymanager") ---
     # Outbound signing: a password-protected PKCS#12 (.p12) keystore holding this
@@ -105,6 +109,25 @@ class Settings(BaseSettings):
     #   {"reference_id": "PARTNER_<MNEMONIC>", "public_key": "<PEM cert>",
     #    "kid": "<optional>", "algorithm": "RS256"}
     crypto_partner_certs: list[dict] = []
+
+    # --- "partner-mgmt" backend: fetch partner public keys from the Partner
+    # Management service (its partner-api) and cache them in-process. Ignored by
+    # the "local"/"keymanager" backends. ---
+    # Base URL of the PM partner-api, e.g. http://partner-management-partner-api.
+    partner_mgmt_api_url: str = ""
+    # Soft TTL (s): refresh window; also min()'d with PM's Cache-Control. Bounds
+    # how long a revoked key / disabled partner stays trusted -> keep it short.
+    partner_key_cache_ttl_seconds: int = 300
+    # Hard TTL (s): if PM is unreachable, keep serving last-known-good keys up to
+    # this age (logged WARNING), then fail closed. Outage cushion only.
+    partner_key_hard_ttl_seconds: int = 21600  # 6h
+    # Negative cache (s): remember a 404 "not available" briefly (fail closed).
+    partner_key_negative_ttl_seconds: int = 30
+    # Min interval (s) between fetch attempts per partner: throttles unknown-kid
+    # refreshes and refetch storms during an outage.
+    partner_key_refresh_cooldown_seconds: int = 10
+    # HTTP timeout (s) for a key fetch from PM.
+    partner_key_fetch_timeout_seconds: float = 3.0
 
     cors_allow_origins: List[str] = []
     cors_allow_credentials: bool = True
