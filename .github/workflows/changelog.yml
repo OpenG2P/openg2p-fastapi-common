@@ -1,0 +1,27 @@
+# Version history / changelog for this LIBRARY (consumed by git ref: no image, no chart).
+#
+# Calls the central openg2p/packaging pipeline in library mode: a rolling page per
+# tracked branch (last commits + summary since the last tag) and a durable page per
+# tag, published to the OpenG2P versions catalogue. Builds/publishes no artifact —
+# PyPI publishing stays in publish.yml, tagging in tag.yml.
+
+name: changelog
+on:
+  push:
+    branches: [develop]
+    tags:
+      - '[0-9]+.[0-9]+.[0-9]+'
+      - 'v[0-9]+.[0-9]+.[0-9]+'      # this repo tags vN.N.N
+
+jobs:
+  changelog:
+    uses: openg2p/openg2p-packaging/.github/workflows/build-publish.yml@v1
+    permissions:
+      contents: read
+    with:
+      changelog_kind: library
+      changelog-repo: openg2p/openg2p-packaging
+      changelog-branch: gh-pages
+    secrets:
+      OPENG2P_BOT_GITHUB_PAT: ${{ secrets.OPENG2P_BOT_GITHUB_PAT }}
+      OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
