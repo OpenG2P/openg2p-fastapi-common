@@ -18,6 +18,8 @@ jobs:
     uses: openg2p/openg2p-packaging/.github/workflows/build-publish.yml@v1
     permissions:
       contents: read
+      packages: write   # the reusable workflow's images/chart jobs declare this; GitHub
+                        # validates it at startup even though both are skipped for a library
     with:
       changelog_kind: library
       changelog-repo: openg2p/openg2p-packaging
