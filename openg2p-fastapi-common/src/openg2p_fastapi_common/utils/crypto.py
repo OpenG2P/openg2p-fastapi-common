@@ -399,18 +399,14 @@ class PartnerMgmtKeyStore:
         transport=None,
         clock=time.monotonic,
     ):
-        self._api_url = (
-            api_url if api_url is not None else _config.partner_mgmt_api_url or ""
-        ).rstrip("/")
+        self._api_url = (api_url if api_url is not None else _config.partner_mgmt_api_url or "").rstrip("/")
         self._soft_ttl = soft_ttl if soft_ttl is not None else _config.partner_key_cache_ttl_seconds
         self._hard_ttl = hard_ttl if hard_ttl is not None else _config.partner_key_hard_ttl_seconds
         self._negative_ttl = (
             negative_ttl if negative_ttl is not None else _config.partner_key_negative_ttl_seconds
         )
         self._refresh_cooldown = (
-            refresh_cooldown
-            if refresh_cooldown is not None
-            else _config.partner_key_refresh_cooldown_seconds
+            refresh_cooldown if refresh_cooldown is not None else _config.partner_key_refresh_cooldown_seconds
         )
         self._timeout = timeout if timeout is not None else _config.partner_key_fetch_timeout_seconds
         self._transport = transport  # injectable httpx transport for tests

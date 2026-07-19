@@ -9,7 +9,6 @@ import asyncio
 
 import httpx
 import pytest
-
 from openg2p_fastapi_common.utils.crypto import PartnerMgmtKeyStore
 
 PEM1 = "-----BEGIN PUBLIC KEY-----\nAAA\n-----END PUBLIC KEY-----"
@@ -37,7 +36,7 @@ class Handler:
 
 def _store(handler, **kw):
     clk = {"t": 0.0}
-    defaults = dict(soft_ttl=300, hard_ttl=6000, negative_ttl=30, refresh_cooldown=10)
+    defaults = {"soft_ttl": 300, "hard_ttl": 6000, "negative_ttl": 30, "refresh_cooldown": 10}
     defaults.update(kw)
     store = PartnerMgmtKeyStore(
         api_url="http://pm",
