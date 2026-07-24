@@ -51,7 +51,17 @@ class Initializer(BaseComponent):
 
     def init_db(self):
         if _config.db_datasource:
-            db_engine = create_async_engine(_config.db_datasource, echo=_config.db_logging)
+            # pool_pre_ping / pool_recycle: without them a pooled connection is
+            # reused forever and never validated, so once the server (or a proxy)
+            # drops an idle connection the next request 500s with
+            # ConnectionDoesNotExistError. See the notes on these settings in
+            # config.py. Applied only to real pooled backends — SQLite uses
+            # non-pooling implementations where these are meaningless.
+            kwargs = {"echo": _config.db_logging}
+            if not _config.db_datasource.startswith("sqlite"):
+                kwargs["pool_pre_ping"] = _config.db_pool_pre_ping
+                kwargs["pool_recycle"] = _config.db_pool_recycle
+            db_engine = create_async_engine(_config.db_datasource, **kwargs)
             dbengine.set(db_engine)
 
     def init_app(self):

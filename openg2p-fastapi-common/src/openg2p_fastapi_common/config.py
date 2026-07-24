@@ -71,6 +71,24 @@ class Settings(BaseSettings):
     db_dbname: str = ""
     db_logging: bool = False
 
+    # ── Connection-pool health ────────────────────────────────────────────────
+    # SQLAlchemy defaults are pool_pre_ping=False and pool_recycle=-1 (never
+    # recycle), so a pooled connection is held forever and handed out without
+    # being checked. When Postgres — or a proxy, firewall or load balancer in
+    # between — drops an idle connection, the next request to reuse it fails with
+    # `ConnectionDoesNotExistError` / `ConnectionResetError [Errno 104]` and the
+    # service answers HTTP 500. Because it only affects connections that have
+    # been idle a while, it shows up as rare, unreproducible 500s on
+    # long-running pods, which is exactly what makes it expensive to diagnose.
+    #
+    # pre-ping issues a cheap liveness check on checkout and transparently
+    # replaces a dead connection; recycle proactively retires connections before
+    # a typical idle timeout. Keep both on unless you have a specific reason.
+    db_pool_pre_ping: bool = True
+    # Seconds before a pooled connection is retired and reopened. 1800 sits below
+    # the common 3600s server/proxy idle timeouts.
+    db_pool_recycle: int = 1800
+
     error_response_debug: bool = False
 
     keymanager_api_base_url: str = ""
