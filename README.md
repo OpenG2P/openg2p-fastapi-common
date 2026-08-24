@@ -1,17 +1,10 @@
-# OpenG2P FastAPI Common Libraries
-[![Pre-commit Status](https://github.com/OpenG2P/openg2p-fastapi-common/actions/workflows/pre-commit.yml/badge.svg?branch=1.1)](https://github.com/OpenG2P/openg2p-fastapi-common/actions/workflows/pre-commit.yml?query=branch%3A1.1)
-[![Build Status](https://github.com/OpenG2P/openg2p-fastapi-common/actions/workflows/test.yml/badge.svg?branch=1.1)](https://github.com/OpenG2P/openg2p-fastapi-common/actions/workflows/test.yml?query=branch%3A1.1)
-[![codecov](https://codecov.io/gh/OpenG2P/openg2p-fastapi-common/branch/1.1/graph/badge.svg)](https://codecov.io/gh/OpenG2P/openg2p-fastapi-common)
+OpenG2P Fastapi Common
+Important
 
-This repo contains python libraries/packages that are used in different projects of openg2p. Thes packages can be used to bootstrap the APIs, config, etc.
+This repository has moved to GitLab
+Active development of OpenG2P Fastapi Common now happens at https://gitlab.com/openg2p/fastapi-common
 
-## Available Packages
+This GitHub repository is archived and read-only. It is kept for history only — it is no longer built, released, or maintained here, and its contents may be out of date. Please raise issues and merge requests on GitLab.
 
-addon | summary
------ | -------
-[openg2p-fastapi-common](openg2p-fastapi-common/) | Common Library
-[openg2p-fastapi-auth](openg2p-fastapi-auth/) | API Auth Library
-
-## Licenses
-
-This repository is licensed under [MPL-2.0](LICENSE).
+Source: https://gitlab.com/openg2p/fastapi-common
+Documentation: https://docs.openg2p.org
