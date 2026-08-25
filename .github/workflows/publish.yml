@@ -16,22 +16,8 @@ jobs:
       run: pip install build
     - name: Build distribution Common
       run: python -m build ./openg2p-fastapi-common
-    - name: Build distribution Auth Models
-      run: python -m build ./openg2p-fastapi-auth-models
-    - name: Build distribution Auth
-      run: python -m build ./openg2p-fastapi-auth
     - name: Publish Common
       uses: pypa/gh-action-pypi-publish@release/v1
       with:
         packages-dir: openg2p-fastapi-common/dist
-        password: ${{ secrets.PYPI_API_TOKEN }}
-    - name: Publish Auth Models
-      uses: pypa/gh-action-pypi-publish@release/v1
-      with:
-        packages-dir: openg2p-fastapi-auth-models/dist
-        password: ${{ secrets.PYPI_API_TOKEN }}
-    - name: Publish Auth
-      uses: pypa/gh-action-pypi-publish@release/v1
-      with:
-        packages-dir: openg2p-fastapi-auth/dist
         password: ${{ secrets.PYPI_API_TOKEN }}
