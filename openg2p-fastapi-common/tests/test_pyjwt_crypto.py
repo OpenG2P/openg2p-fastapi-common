@@ -1,10 +1,10 @@
-"""Unit tests for the local (Keymanager-free) JWS backend in utils/crypto.
+"""Unit tests for the local (Keymanager-free) JWS backend in crypto.
 
 Exercises ``PyJWTCryptoHelper`` (.p12 signing + DB-backed cert verification via
 ``PartnerKeyStore`` over an in-memory SQLite ``partner_keys`` table),
 ``seed_partner_certs`` (idempotent seed-based onboarding), and the
-``build_crypto_helper`` backend factory. ``KeymanagerCryptoHelper`` is untouched
-and selected by ``crypto_backend="keymanager"`` (the default).
+``CryptoFactory`` backend selection. Default backend is ``pyjwt``.
+``KeymanagerCryptoHelper`` is selected by ``crypto_backend="keymanager"``.
 """
 
 import base64
@@ -18,15 +18,16 @@ from cryptography.hazmat.primitives import hashes, serialization
 from cryptography.hazmat.primitives.asymmetric import rsa
 from cryptography.hazmat.primitives.serialization import Encoding, pkcs12
 from cryptography.x509.oid import NameOID
-from openg2p_fastapi_common.models import BaseORMModelWithId
-from openg2p_fastapi_common.utils.crypto import (
+from openg2p_fastapi_common.crypto import (
+    CryptoFactory,
+    CryptoHelper,
     KeymanagerCryptoHelper,
     PartnerKeyStore,
     PyJWTCryptoHelper,
-    build_crypto_helper,
     is_forbidden_algorithm,
     seed_partner_certs,
 )
+from openg2p_fastapi_common.models import BaseORMModelWithId
 from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 
 P12_PASSWORD = b"unit-test"
@@ -90,8 +91,23 @@ def test_forbidden_algorithms():
 
 
 def test_factory_selects_backend():
-    assert isinstance(build_crypto_helper(backend="local", allowed_algorithms=["RS256"]), PyJWTCryptoHelper)
-    assert isinstance(build_crypto_helper(backend="keymanager"), KeymanagerCryptoHelper)
+    assert isinstance(CryptoFactory.build(allowed_algorithms=["RS256"]), PyJWTCryptoHelper)
+    assert isinstance(CryptoFactory.build(backend="pyjwt", allowed_algorithms=["RS256"]), PyJWTCryptoHelper)
+    assert isinstance(CryptoFactory.build(backend="local", allowed_algorithms=["RS256"]), PyJWTCryptoHelper)
+    assert isinstance(CryptoFactory.build(backend="keymanager"), KeymanagerCryptoHelper)
+    helper = CryptoFactory.build(backend="partner-mgmt", allowed_algorithms=["RS256"])
+    assert isinstance(helper, PyJWTCryptoHelper)
+    try:
+        CryptoFactory.build(backend="unknown")
+        raise AssertionError("expected ValueError for unknown backend")
+    except ValueError:
+        pass
+
+
+def test_get_crypto_helper_uses_interface_and_reuses_instance():
+    helper = CryptoFactory.get(allowed_algorithms=["RS256"])
+    assert isinstance(helper, CryptoHelper)
+    assert CryptoFactory.get() is helper
 
 
 @pytest.mark.asyncio
