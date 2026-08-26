@@ -5,4 +5,3 @@ asyncpg
 # In-memory SQLite for the local crypto backend (PyJWTCryptoHelper / partner_keys) tests.
 aiosqlite
 greenlet
--e openg2p-fastapi-auth-models

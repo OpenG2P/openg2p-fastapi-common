@@ -9,7 +9,7 @@ import asyncio
 
 import httpx
 import pytest
-from openg2p_fastapi_common.utils.crypto import PartnerMgmtKeyStore
+from openg2p_fastapi_common.crypto import PartnerMgmtKeyStore
 
 PEM1 = "-----BEGIN PUBLIC KEY-----\nAAA\n-----END PUBLIC KEY-----"
 PEM2 = "-----BEGIN PUBLIC KEY-----\nBBB\n-----END PUBLIC KEY-----"

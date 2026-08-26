@@ -97,7 +97,7 @@ class PartnerKey(BaseORMModelWithTimes):
     an overlap operation. Onboarding is seed-based (``crypto_partner_certs``); a
     runtime admin API is a planned follow-up (TODO).
 
-    Only used when ``crypto_backend="local"``; the keymanager backend never creates
+    Only used when ``crypto_backend`` is ``pyjwt`` or ``local``; the keymanager backend never creates
     or reads this table (the service calls ``create_migrate`` only when local).
     """
 
