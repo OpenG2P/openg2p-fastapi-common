@@ -35,8 +35,8 @@ dynamic = ["version"]
 [project.urls]
 Homepage = "https://openg2p.org"
 Documentation = "https://docs.openg2p.org/"
-Repository = "https://gitlab.com/openg2p/shared-libraries/fastapi-common"
-Source = "https://gitlab.com/openg2p/shared-libraries/fastapi-common"
+Repository = "https://github.com/OpenG2P/openg2p-fastapi-common"
+Source = "https://github.com/OpenG2P/openg2p-fastapi-common"
 
 [tool.hatch.version]
 path = "src/openg2p_fastapi_common/__init__.py"
