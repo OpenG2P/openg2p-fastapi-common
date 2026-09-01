@@ -147,6 +147,11 @@ class Settings(BaseSettings):
     # HTTP timeout (s) for a key fetch from PM.
     partner_key_fetch_timeout_seconds: float = 3.0
 
+    # Notification / Novu. Each service reads these with its own env prefix.
+    notification_impl: str = "openg2p_fastapi_common.notification.implementations.NovuNotifier"
+    novu_url: str = "https://api.novu.co"
+    novu_api_key: str = ""
+
     cors_allow_origins: List[str] = []
     cors_allow_credentials: bool = True
     security_headers_enabled: bool = True
