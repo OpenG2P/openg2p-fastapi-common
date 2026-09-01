@@ -10,10 +10,9 @@ else:
     from typing_extensions import Self
 
 from sqlalchemy import Boolean, DateTime, String, inspect, select
-from sqlalchemy.ext.asyncio import async_sessionmaker
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
-from .context import dbengine
+from .context import dbengine, get_async_session_maker
 
 
 class BaseORMModel(DeclarativeBase):
@@ -40,7 +39,7 @@ class BaseORMModel(DeclarativeBase):
             return cls.__table_exists
 
     async def update_to_db(self):
-        async_session_maker = async_sessionmaker(dbengine.get())
+        async_session_maker = get_async_session_maker()
         async with async_session_maker() as session:
             await session.merge(self)
             await session.commit()
@@ -55,7 +54,7 @@ class BaseORMModelWithId(BaseORMModel):
     @classmethod
     async def get_by_id(cls, id: int, active=True) -> Self:
         result = None
-        async_session_maker = async_sessionmaker(dbengine.get())
+        async_session_maker = get_async_session_maker()
         async with async_session_maker() as session:
             result = await session.get(cls, id)
             if (not result) or (result.active != active):
@@ -66,7 +65,7 @@ class BaseORMModelWithId(BaseORMModel):
     @classmethod
     async def get_all(cls, active=True) -> list[Self]:
         response = []
-        async_session_maker = async_sessionmaker(dbengine.get())
+        async_session_maker = get_async_session_maker()
         async with async_session_maker() as session:
             stmt = select(cls).where(cls.active == active).order_by(cls.id.asc())
 

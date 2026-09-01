@@ -88,6 +88,10 @@ class Settings(BaseSettings):
     # Seconds before a pooled connection is retired and reopened. 1800 sits below
     # the common 3600s server/proxy idle timeouts.
     db_pool_recycle: int = 1800
+    # Persistent connections kept in the pool per process (SQLAlchemy default 5).
+    db_pool_size: int = 5
+    # Extra checkouts allowed under burst (SQLAlchemy default 10).
+    db_pool_max_overflow: int = 10
 
     error_response_debug: bool = False
 

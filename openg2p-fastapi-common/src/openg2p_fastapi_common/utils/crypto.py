@@ -14,7 +14,6 @@ from cryptography.hazmat.primitives.serialization import load_pem_public_key, pk
 from cryptography.x509 import load_pem_x509_certificate
 from jwt import PyJWS
 from sqlalchemy import select
-from sqlalchemy.ext.asyncio import async_sessionmaker
 
 from ..config import Settings
 from ..service import BaseService
@@ -285,9 +284,9 @@ class PartnerKeyStore:
     def _maker(self):
         if self._session_maker is not None:
             return self._session_maker
-        from ..context import dbengine
+        from ..context import get_async_session_maker
 
-        return async_sessionmaker(dbengine.get(), expire_on_commit=False)
+        return get_async_session_maker()
 
     async def get_keys(self, reference_id, wanted_kid=None):
         """Return active partner key dicts for ``reference_id``, or None if unknown.
@@ -773,9 +772,9 @@ async def seed_partner_certs(certs, session_maker=None):
     from ..models import PartnerKey
 
     if session_maker is None:
-        from ..context import dbengine
+        from ..context import get_async_session_maker
 
-        session_maker = async_sessionmaker(dbengine.get(), expire_on_commit=False)
+        session_maker = get_async_session_maker()
 
     added = 0
     async with session_maker() as session:
