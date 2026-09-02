@@ -10,11 +10,11 @@ import orjson
 import uvicorn
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from sqlalchemy.ext.asyncio import create_async_engine
+from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 
 from .component import BaseComponent
 from .config import Settings, WorkerType
-from .context import app_registry, component_registry, dbengine
+from .context import app_registry, async_session_maker, component_registry, dbengine
 from .exception import BaseExceptionHandler
 from .middleware import SecurityHeadersMiddleware
 
@@ -61,8 +61,11 @@ class Initializer(BaseComponent):
             if not _config.db_datasource.startswith("sqlite"):
                 kwargs["pool_pre_ping"] = _config.db_pool_pre_ping
                 kwargs["pool_recycle"] = _config.db_pool_recycle
+                kwargs["pool_size"] = _config.db_pool_size
+                kwargs["max_overflow"] = _config.db_pool_max_overflow
             db_engine = create_async_engine(_config.db_datasource, **kwargs)
             dbengine.set(db_engine)
+            async_session_maker.set(async_sessionmaker(db_engine, expire_on_commit=False))
 
     def init_app(self):
         app = FastAPI(
@@ -159,6 +162,7 @@ class Initializer(BaseComponent):
         if dbengine.get():
             await dbengine.get().dispose()
             dbengine.set(None)
+        async_session_maker.set(None)
 
     @asynccontextmanager
     async def fastapi_app_lifespan(self, app: FastAPI):
