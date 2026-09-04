@@ -4,7 +4,6 @@ import time
 from datetime import datetime
 
 from sqlalchemy import select
-from sqlalchemy.ext.asyncio import async_sessionmaker
 
 from ..config import Settings
 from .constants import DEFAULT_PARTNER_KEY_CACHE_TTL_SECONDS
@@ -39,9 +38,9 @@ class PartnerKeyStore:
     def _maker(self):
         if self._session_maker is not None:
             return self._session_maker
-        from ..context import dbengine
+        from ..context import get_async_session_maker
 
-        return async_sessionmaker(dbengine.get(), expire_on_commit=False)
+        return get_async_session_maker()
 
     async def get_keys(self, reference_id, wanted_kid=None):
         """Return active partner key dicts for ``reference_id``, or None if unknown.
