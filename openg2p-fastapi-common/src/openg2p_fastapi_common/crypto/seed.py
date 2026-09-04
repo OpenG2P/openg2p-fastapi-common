@@ -4,7 +4,6 @@ import logging
 from cryptography.hazmat.primitives import hashes
 from cryptography.x509 import load_pem_x509_certificate
 from sqlalchemy import select
-from sqlalchemy.ext.asyncio import async_sessionmaker
 
 from ..config import Settings
 
@@ -32,9 +31,9 @@ async def seed_partner_certs(certs, session_maker=None):
     from ..models import PartnerKey
 
     if session_maker is None:
-        from ..context import dbengine
+        from ..context import get_async_session_maker
 
-        session_maker = async_sessionmaker(dbengine.get(), expire_on_commit=False)
+        session_maker = get_async_session_maker()
 
     added = 0
     async with session_maker() as session:
