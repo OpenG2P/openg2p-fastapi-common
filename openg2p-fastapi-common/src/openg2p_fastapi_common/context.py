@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING, Generic, List, Optional, TypeVar
 
 from fastapi import FastAPI
 from pydantic_settings import BaseSettings
-from sqlalchemy.ext.asyncio import AsyncEngine
+from sqlalchemy.ext.asyncio import AsyncEngine, async_sessionmaker
 
 if TYPE_CHECKING:
     from .component import BaseComponent
@@ -35,3 +35,21 @@ config_registry: ContextVar[list[BaseSettings]] = ContextVar("config_registry", 
 component_registry: List["BaseComponent"] = []
 
 dbengine: GlobalVar[AsyncEngine] = GlobalVar("dbengine", default=None)
+async_session_maker: GlobalVar[async_sessionmaker] = GlobalVar("async_session_maker", default=None)
+
+
+def get_async_session_maker() -> async_sessionmaker:
+    """Return the process-wide session factory, creating it lazily if needed.
+
+    ``async_sessionmaker`` is a factory, not a session — callers still do
+    ``async with get_async_session_maker()() as session``.
+    """
+    maker = async_session_maker.get()
+    if maker is not None:
+        return maker
+    engine = dbengine.get()
+    if engine is None:
+        raise RuntimeError("Database engine is not initialized")
+    maker = async_sessionmaker(engine, expire_on_commit=False)
+    async_session_maker.set(maker)
+    return maker
