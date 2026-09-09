@@ -86,13 +86,14 @@ def test_init_db_passes_pool_kwargs_for_postgres(monkeypatch):
     Initializer.__new__(Initializer).init_db()
 
     assert captured["url"] == "postgresql+asyncpg://u:p@localhost/db"
-    assert captured["kwargs"] == {
-        "echo": False,
-        "pool_pre_ping": True,
-        "pool_recycle": 1800,
-        "pool_size": 5,
-        "max_overflow": 10,
-    }
+    assert not captured["kwargs"]["echo"]
+    assert captured["kwargs"]["pool_pre_ping"]
+    assert captured["kwargs"]["pool_recycle"] == 1800
+    assert captured["kwargs"]["pool_size"] == 5
+    assert captured["kwargs"]["max_overflow"] == 10
+    assert "connect_args" in captured["kwargs"]
+    assert captured["kwargs"]["connect_args"]["statement_cache_size"] == 0
+    assert "prepared_statement_name_func" in captured["kwargs"]["connect_args"]
     engine = dbengine.get()
     maker = async_session_maker.get()
     assert engine is not None

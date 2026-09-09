@@ -63,6 +63,14 @@ class Initializer(BaseComponent):
                 kwargs["pool_recycle"] = _config.db_pool_recycle
                 kwargs["pool_size"] = _config.db_pool_size
                 kwargs["max_overflow"] = _config.db_pool_max_overflow
+
+                # Required when using asyncpg with PgBouncer
+                # in transaction pooling mode.
+                if _config.db_datasource.startswith("postgresql+asyncpg"):
+                    kwargs["connect_args"] = {
+                        "statement_cache_size": 0,
+                        "prepared_statement_name_func": lambda: None,
+                    }
             db_engine = create_async_engine(_config.db_datasource, **kwargs)
             dbengine.set(db_engine)
             async_session_maker.set(async_sessionmaker(db_engine, expire_on_commit=False))
