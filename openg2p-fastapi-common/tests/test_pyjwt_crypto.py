@@ -94,6 +94,13 @@ def test_factory_selects_backend():
     assert isinstance(build_crypto_helper(backend="keymanager"), KeymanagerCryptoHelper)
 
 
+def test_partner_mgmt_helpers_share_key_cache():
+    first = build_crypto_helper(backend="partner-mgmt")
+    second = build_crypto_helper(backend="partner-mgmt")
+    assert isinstance(first, PyJWTCryptoHelper)
+    assert first._partner_key_store is second._partner_key_store
+
+
 @pytest.mark.asyncio
 async def test_sign_then_verify(db, tmp_path):
     key, cert = _make_keypair()

@@ -810,6 +810,26 @@ async def seed_partner_certs(certs, session_maker=None):
     _logger.info("Seeded %d partner cert(s) into partner_keys", added)
 
 
+_partner_mgmt_key_store = None
+_partner_mgmt_key_store_lock = threading.Lock()
+
+
+def get_partner_mgmt_key_store(api_url=None, **kwargs) -> PartnerMgmtKeyStore:
+    """Process-wide Partner Management key cache.
+
+    Every ``partner-mgmt`` helper shares this store, so a key fetched from
+    Partner Management is reused until its TTL expires instead of being fetched
+    again on the next request or by another helper in the same process.
+    """
+    global _partner_mgmt_key_store
+    with _partner_mgmt_key_store_lock:
+        if _partner_mgmt_key_store is None:
+            _partner_mgmt_key_store = PartnerMgmtKeyStore(api_url=api_url, **kwargs)
+        elif api_url and not _partner_mgmt_key_store._api_url:
+            _partner_mgmt_key_store._api_url = api_url.rstrip("/")
+        return _partner_mgmt_key_store
+
+
 def build_crypto_helper(name="", backend=None, **kwargs) -> CryptoHelper:
     """Register the configured CryptoHelper backend.
 
@@ -825,7 +845,7 @@ def build_crypto_helper(name="", backend=None, **kwargs) -> CryptoHelper:
     """
     backend = backend or _config.crypto_backend
     if backend == "partner-mgmt":
-        store = kwargs.pop("partner_key_store", None) or PartnerMgmtKeyStore()
+        store = kwargs.pop("partner_key_store", None) or get_partner_mgmt_key_store()
         return PyJWTCryptoHelper(name=name, partner_key_store=store, **kwargs)
     if backend == "local":
         return PyJWTCryptoHelper(name=name, **kwargs)
