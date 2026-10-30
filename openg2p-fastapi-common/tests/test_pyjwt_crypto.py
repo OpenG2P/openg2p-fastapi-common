@@ -111,8 +111,8 @@ def test_get_crypto_helper_uses_interface_and_reuses_instance():
 
 
 def test_partner_mgmt_helpers_share_key_cache():
-    first = build_crypto_helper(backend="partner-mgmt")
-    second = build_crypto_helper(backend="partner-mgmt")
+    first = CryptoFactory.build(backend="partner-mgmt")
+    second = CryptoFactory.build(backend="partner-mgmt")
     assert isinstance(first, PyJWTCryptoHelper)
     assert first._partner_key_store is second._partner_key_store
 

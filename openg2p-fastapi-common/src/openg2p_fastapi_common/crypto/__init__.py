@@ -5,7 +5,7 @@ from .constants import (
     PARTNER_KEY_MIN_TTL_SECONDS,
     is_forbidden_algorithm,
 )
-from .factory import CryptoFactory
+from .factory import CryptoFactory, get_partner_mgmt_key_store
 from .interface import CryptoHelper
 from .keymanager import KeymanagerCryptoHelper
 from .partner_key_store import PartnerKeyStore
@@ -24,6 +24,7 @@ __all__ = [
     "PartnerKeyStore",
     "PartnerMgmtKeyStore",
     "PyJWTCryptoHelper",
+    "get_partner_mgmt_key_store",
     "is_forbidden_algorithm",
     "seed_partner_certs",
 ]
