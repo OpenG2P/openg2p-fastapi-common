@@ -10,7 +10,6 @@ This repo contains python libraries/packages that are used in different projects
 addon | summary
 ----- | -------
 [openg2p-fastapi-common](openg2p-fastapi-common/) | Common Library
-[openg2p-fastapi-auth](openg2p-fastapi-auth/) | API Auth Library
 
 ## Licenses
 

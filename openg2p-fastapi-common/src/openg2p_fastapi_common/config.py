@@ -108,14 +108,14 @@ class Settings(BaseSettings):
 
     # JWS sign/verify backend selector — DISTINCT from the keymanager_* settings
     # above, which are left untouched.
-    #   "keymanager" (default) -> KeymanagerCryptoHelper (remote Keymanager service).
-    #   "local"                -> PyJWTCryptoHelper reading a locally-seeded
+    #   "pyjwt" (default) / "local" -> PyJWTCryptoHelper reading a locally-seeded
     #                             partner_keys table (PartnerKeyStore).
     #   "partner-mgmt"         -> PyJWTCryptoHelper fetching partner keys from the
     #                             Partner Management service (PartnerMgmtKeyStore),
     #                             cached in-process. No local seeding needed.
-    crypto_backend: str = "keymanager"
-    # --- "local" backend settings (ignored when crypto_backend="keymanager") ---
+    #   "keymanager"           -> KeymanagerCryptoHelper (remote Keymanager service).
+    crypto_backend: str = "pyjwt"
+    # --- pyjwt / local backend settings (ignored when crypto_backend="keymanager") ---
     # Outbound signing: a password-protected PKCS#12 (.p12) keystore holding this
     # service's own private key. Empty when the service only verifies.
     crypto_signing_key_path: str = ""
@@ -150,6 +150,11 @@ class Settings(BaseSettings):
     partner_key_refresh_cooldown_seconds: int = 10
     # HTTP timeout (s) for a key fetch from PM.
     partner_key_fetch_timeout_seconds: float = 3.0
+
+    # Notification / Novu. Each service reads these with its own env prefix.
+    notification_impl: str = "openg2p_fastapi_common.notification.implementations.NovuNotifier"
+    novu_url: str = "https://api.novu.co"
+    novu_api_key: str = ""
 
     cors_allow_origins: List[str] = []
     cors_allow_credentials: bool = True

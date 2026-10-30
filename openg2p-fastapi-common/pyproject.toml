@@ -17,7 +17,7 @@ classifiers = [
   "Operating System :: OS Independent",
 ]
 dependencies = [
-  "fastapi >=0.103.1",
+  "fastapi==0.137.1",
   "uvicorn[standard] >=0.12.0",
   "gunicorn >=22.0.0",
   "asyncio >=3.4.3",
@@ -29,14 +29,15 @@ dependencies = [
   "json-logging >=1.3.0",
   "orjson >=3.9.7",
   "PyJWT[crypto] >=2.8.0",
+  "novu-py==3.19.0",
 ]
 dynamic = ["version"]
 
 [project.urls]
 Homepage = "https://openg2p.org"
 Documentation = "https://docs.openg2p.org/"
-Repository = "https://github.com/openg2p/openg2p-fastapi-common"
-Source = "https://github.com/openg2p/openg2p-fastapi-common"
+Repository = "https://github.com/OpenG2P/openg2p-fastapi-common"
+Source = "https://github.com/OpenG2P/openg2p-fastapi-common"
 
 [tool.hatch.version]
 path = "src/openg2p_fastapi_common/__init__.py"
